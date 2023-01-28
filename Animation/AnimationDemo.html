@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<title>Sungmin Kim, CS 570, Project 2</title>
+
+<script type="text/javascript" src="Animation.js"></script>
+<script type="text/javascript" src="VisualTree.js"></script>
+<script type="text/javascript" src="AnimationDemo.js"></script>
+
+<style>
+    canvas {
+        background-color:lightgray;
+    }
+    .playBackSlider {
+        width: 50%;
+    }
+</style>
+
+<body>
+    
+    <button id="run">run >></button>
+    <button id="prev">prev &lt</button>
+    <button id="next">next ></button>
+    progress: <input type="range" id="progress" class="playBackSlider"></input>
+    <br>
+    speed: <input type="range" id="speed" min="200" max="2000" step="200"></input>
+    <br>
+    <canvas id="canvas" width="1280" height="720"></canvas>
+
+</body>
+</html>
