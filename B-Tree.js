@@ -4,8 +4,6 @@ class BTree{
     this.t = t;                                                 //keeps track of the degree of the tree 2-3,2-4,2-5....
     this.root = new Node(t);                                    //reference to root node
     this.maxKeys = 2*t - 1;                                     //the maximum amount of keys a node can have before needing a split
-    this.maxChildren = 2*t;                                     //the maximum number of children a node can have
-    this.minKeys = t-1;                                         //the minimum number of keys a node must have, otherwise a merge needs to occur
   }
 
   insert(key){
@@ -22,6 +20,14 @@ class BTree{
     else{
       r.insert_nonfull(key);                                    //the root did not need to be split, try to insert the key
     }
+  }
+
+  search(key){
+    return this.root.search(key);
+  }
+
+  delete(key){
+    return this.root.delete(key);
   }
 }
 
@@ -116,5 +122,207 @@ class Node {
       return this.childNodes[i].search(key);                              //recurse on the right,child (we were greater than the key)
     }
   }
-}
 
+  //deletes a node from the B-tree given a key
+  delete(key){
+    let index = this.keys.indexOf(key);                                     //check if the key we are looking for is in the current node
+    if(index !== -1){                                                       //the key is in the current node
+      if(this.isLeaf){                                                      //the node to delete from is a leaf
+        this.removeFromLeaf(index);                                              //all we need to do is delete it from the leaf (we are ensured it has at least t keys due to preemptive merge)
+      }
+      else{                                                                 //the node to delete from is not a leaf
+        this.removeFromNonLeaf(index);
+      }
+    }
+    //the key is not in the current node
+    else{
+      if(this.isLeaf){                                                      //the key is not in the tree since we are at a leaf
+        return null;
+      }
+      let childToRecurseOnIndex = this.getChildToRecurseOn(key);
+
+      //determine if the child we will recurse onto has less than t keys
+      let wasFarRightChild = false;
+      if(childToRecurseOnIndex === this.keys.length){
+        wasFarRightChild = true;
+      }
+      if(this.childNodes[childToRecurseOnIndex].length < this.t){
+        this.fill(childToRecurseOnIndex);                                       //premptive fill on the way down (has t-1 nodes, need to make sure it has more than that)
+      }
+
+      if(wasFarRightChild && index > this.keys.length){
+        this.childNodes[index-1].delete(key);                             //we lost a child at the end after fill/merge and we need to recurse on one less
+      }
+      else{
+        this.childNodes[index].delete(key);                               //recurse on child which we know has at least t keys
+      }
+    }
+  }
+
+  //deletes the key from a leaf
+  removeFromLeaf(index){
+    //case 1
+    for(let i = index+1; i < this.keys.length; i++){
+      this.keys[i-1] = this.keys[i];                                        //move all keys after the deleted index back one to fill in the gap
+    }
+    this.keys.length = this.keys.length-1;                                 //reduce the length of the keys by one after deletion
+  }
+
+  //deletes a key from a non-leaf (index is the index of the key to be removed)
+  removeFromNonLeaf(index){
+    let key = this.keys[index];
+
+    //case 2a: left child has at least t keys (replace with the predecessor), recursively delete the predecessor
+    if(this.childNodes[index].keys.length >= this.t){
+      let predecessor = this.getPredecessor(index);                             //get the key of the predecessor
+      this.keys[index] = predecessor;                                           //replace the value to be deleted with the predecessor
+      this.childNodes[index].delete(predecessor);                                //recursively delete the predecessor
+    }
+
+    //case 2b: right child has at least t keys (replace with the successor), recursively delete the successor
+    else if(this.childNodes[index+1].keys.length >= this.t){
+      let successor = this.getSuccessor(index);                                 //get the key of the successor
+      this.keys[index] = successor;                                             //replace the value to be deleted with the successor
+      this.childNodes[index+1].delete(successor);                               //recursively delete the successor
+    }
+
+    //case 2c: neither the left or the right child has at least t keys (merge left and right children and the key), recursively delete the key from the merged array
+    else{
+      this.merge(index);
+      this.childNodes[index].delete(key);                                       //delete the key from the left child which everything was merged into
+    }
+  }
+
+  //returns the key value of the predecessor
+  getPredecessor(index){
+    let currentNode = this.childNodes[index];                                   //the child node to start looking in
+    while(!currentNode.isLeaf){
+      currentNode = currentNode.childNodes[currentNode.keys.length];            //keep traversing right until we have reached a leaf
+    }
+    return currentNode.keys[currentNode.keys.length-1];                         //return the rightmost key in the node
+  }
+
+  //returns the key value of the successor
+  getSuccessor(index){
+    let currentNode = this.childNodes[index+1];                                 //the child node to start looking in
+    while(!currentNode.isLeaf){
+      currentNode = currentNode.childNodes[0];                                  //keep traversing left until we have reached a leaf
+    }
+    return currentNode.keys[0];                                                 //return the leftmost key in the node
+  }
+
+  //merges the left and right child and the parent key
+  merge(index){
+    let left = this.childNodes[index];                                          //the left child
+    let right = this.childNodes[index+1];                                       //the right child
+
+    left.keys.push(this.keys[index]);                                           //add the parent's value to the left array
+
+    left.keys.push.apply(left.keys,right.keys);                                 //copy the right keys to the left   //fixme is this correct?
+
+    //check if we are working with leaves and if we need to deal with children or not
+    if(!left.isLeaf){
+      left.childNodes.push.apply(left.childNodes,right.childNodes);             //append the children from the right over to the left array
+    }
+
+    //delete the parent key and move everything to the left
+    for(let i = index + 1; i < this.keys.length; i++){
+      this.keys[i-1] = this.keys[i];                                             //move everything to the left
+    }
+
+    //update the child pointers since we got rid of one child
+    for(let i = index + 2; i < this.keys.length; i++){                          //start at i + 2 because right child deleted was at i + 1
+      this.childNodes[i-1] = this.childNodes[i];                                 //move everything to the left
+    }
+    this.keys.length = this.keys.length - 1;                                    //deleted a key so the length of the keys array gets reduces by 1
+    this.childNodes.length = this.childNodes.length - 1;                        //deleted the right child so the length of the children array gets reduced by 1
+  }
+
+  //returns the index of the child to recurse on
+  getChildToRecurseOn(key){
+    let i = 0;
+    while(i < this.keys.length && key > this.keys[i]){                  //locate roughly where to look (iterate through the keys until we are greater than or equal to the key)
+      i++;
+    }
+    return i;
+  }
+
+
+  //makes a child that we were going to recurse on with t-1 nodes have t nodes
+  fill(index){
+
+    //case 3a: node only has t-1 keys, but one of its siblings has t keys
+    if(index !== 0 && this.childNodes[index - 1].keys.length >= this.t){           //left sibling has at least t keys, do a right rotation
+      this.rightRotation(index);
+    }
+    else if(index !== this.childNodes.length && this.childNodes[index+1].keys.length >= this.t){      //right sibling has at least t keys so do a left rotation
+      this.leftRotation(index);
+    }
+    //case 3b: node and both of its siblings only have t-1 keys (merge everything)
+    else{
+      if(index === this.keys.length){                                                                    //merge with left sibling if the last child
+        this.merge(index-1);
+      }
+      else{                                                                                             //merge with right sibling if not the last child
+        this.merge(index - 1);
+      }
+    }
+  }
+
+  //borrows a key from the right sibling for the fill operation
+  leftRotation(index){
+    let left = this.childNodes[index];                                          //the child we are recursing on
+    let right = this.childNodes[index+1];                                       //the sibling we are going to borrow from
+
+    left.keys.push(this.keys[index]);                                           //bring down the parent key and put it at the end of the left child (we can do this because we checked to make sure we weren't at rightmost child before merging)
+
+    if(!left.isLeaf){
+      left.childNodes.push(right.childNodes[0])                                 //if left and right have leaves, then give leftmost child of right sibling to the left node
+    }
+
+    this.keys[index] = right.keys[0];                                           //move the number from the right sibling up into the parent
+
+    for(let i = 0; i < right.keys.length; i++){                                 //shift the keys in the sibling back 1
+      right.keys[i-1] = right.keys[i];
+    }
+
+    if(!right.isLeaf){
+      for(let i = 0; i <= right.keys.length; i++){                              //shift the children in the sibling back 1
+        right.childNodes[i-1] = right.childNodes[i];
+      }
+    }
+
+    //we got rid of a node from the sibling so decrement its length by 1
+    right.keys.length --;
+    right.childNodes.length--;
+  }
+
+  //borrows a key from the left sibling for the fill operation
+  rightRotation(index){
+    let left = this.childNodes[index-1];                                          //the sibling we are going to borrow from
+    let right = this.childNodes[index];                                           //the child we are recursing on
+
+    for(let i = right.keys.length - 1; i >= 0; i--){                               //bring down the parent key and prepend it to the right child
+      right.keys[i+1] = right.keys[i];                                             //make a space at the beginning by moving all keys to the right
+    }
+
+    if(!right.isLeaf){                                                               //check if we need to move the right's children to the right if there are any
+      for(let i = right.keys.length - 1; i >= 0; i--){
+        right.keys[i+1] = right.keys[i];                                             //make a space at the beginning by moving all children to the right
+      }
+    }
+
+    right.keys[0] = keys[index-1];                                                //bring down the parent (use index-1 because we are at a right child)
+
+    //move the left sibling's right child to be the right sibling leftmost child
+    if(!right.isLeaf){
+      right.childNodes[0] = left.childNodes[left.keys.length];
+    }
+
+    //move the node from the left sibling up into the parent
+    this.keys[index-1] = left.keys[left.keys.length-1];
+
+    left.keys.length--;                                                         //borrowed a key from the left sibling so decrement the lengths
+    left.childNodes.length--;
+  }
+}
