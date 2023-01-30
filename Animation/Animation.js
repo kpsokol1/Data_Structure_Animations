@@ -21,6 +21,61 @@ class Timing {
     }
 }
 
+function CompositeAnimation(...animations) {
+    this.sequence = animations;
+    this.finished = Promise.resolve();
+    this.current = 0;
+    this.paused = false;
+
+    this.pause();
+    this.reset();
+}
+
+Object.assign(CompositeAnimation.prototype, _Animation.prototype);
+
+CompositeAnimation.prototype.play = function () {
+    this.paused = false;
+    this.sequence[this.current].play();
+}
+
+CompositeAnimation.prototype.pause = function () {
+    this.paused = true;
+    this.sequence[this.current].pause();
+}
+
+CompositeAnimation.prototype.showFirstFrame = function () {
+    this.sequence[0].showFirstFrame();
+}
+
+CompositeAnimation.prototype.showLastFrame = function () {
+    this.sequence[this.sequence.length - 1].showLastFrame();
+}
+
+CompositeAnimation.prototype.abort = function () {
+    this.sequence.forEach(anim => anim.abort());
+    this.reset();
+}
+
+CompositeAnimation.prototype.reset = function () {
+    this.sequence.forEach(anim => anim.reset());
+    this.current = 0;
+
+    this.finished = new Promise((resolve, reject) => {
+        let playNext = () => {
+            console.log(this.current);
+            if (!this.paused) this.sequence[this.current].play();
+            this.sequence[this.current].finished.then(() => {
+                if (++this.current >= this.sequence.length) {
+                    this.current = 0;
+                    resolve();
+                } else
+                    playNext();
+            }, reject);
+        }
+        playNext();
+    });
+}
+
 
 /**
  * Returns an Animation object.
@@ -33,11 +88,18 @@ class Timing {
  * @returns {_Animation}
  */
 function _Animation(timing, draw, duration, before = ()=>{}, after = ()=>{}) {
-    let pauseLock = Promise.resolve();
-    let unpause;
-    let elapsedTime;
-    let startTime;
-    let abort;
+    this.timing = timing;
+    this.draw = draw;
+    this.duration = duration;
+    this.before = before;
+    this.after = after;
+
+    this.pauseLock;
+    this.unpause;
+    this.elapsedTime;
+    this.startTime;
+    this.exitLoop;
+    this.paused = false;
 
     /**
      * Resolves when the animation finishes playing.
@@ -45,82 +107,83 @@ function _Animation(timing, draw, duration, before = ()=>{}, after = ()=>{}) {
      */
     this.finished = Promise.resolve();
 
-    this.play = () => {
-        startTime = performance.now() - elapsedTime;
-        unpause();
-    }
-
-    this.pause = () => {
-        pauseLock =                 // The animation loop waits on pauseLock
-        new Promise((resolve) => {
-            unpause = resolve;      // call unpause to resolve the lock
-        });
-    }
-
-    this.showFirstFrame = () => {
-        before();
-        draw(0);
-    }
-
-    this.showLastFrame = () => {
-        draw(1);
-        after();
-    }
-
-    /**
-     * Abort the animation by rejecting {@member finished}.
-     * This can be used to break out of a chain of animation callbacks.
-     */
-    this.abort = () => {
-        abort();
-        this.pause();
-        this.reset();
-    }
-
-    /**
-     * Initializes {@member finished} and resets the animation progress.
-     */
-    this.reset = () => {
-        elapsedTime = 0;
-        startTime = performance.now();
-        let start = true;
-
-        this.finished = new Promise((resolve, reject) => {
-            abort = reject;
-            let animate = async(time) => {
-                elapsedTime = time - startTime;
-
-                let timeFraction = elapsedTime /    // Call duration if it is a function.
-                    (duration instanceof Function ? duration() : duration);
-                
-
-                if (timeFraction < 0) timeFraction = 0;
-                if (timeFraction > 1) timeFraction = 1;
-            
-                let progress = timing(timeFraction);
-
-                await pauseLock;    // Wait if the animation is paused.
-
-                if (start) {
-                    before();
-                    start = false;
-                }
-                draw(progress);
-            
-                if (timeFraction < 1) {
-                    requestAnimationFrame(animate);     // Draw the next frame.
-                } else {
-                    after();
-                    this.pause();
-                    this.reset();
-                    resolve();      // Resolve the promise.
-                }
-            }
-
-            requestAnimationFrame(animate);
-        });
-    }
-
     this.pause();
     this.reset();
+}
+
+_Animation.prototype.play = function () {
+    this.startTime = performance.now() - this.elapsedTime;
+    this.paused = false;
+    this.unpause();
+}
+
+_Animation.prototype.pause = function () {
+    this.paused = true;
+
+    this.pauseLock =                 // The animation loop waits on pauseLock
+    new Promise((resolve) => {
+        this.unpause = resolve;      // call unpause to resolve the lock
+    });
+}
+
+_Animation.prototype.showFirstFrame = function () {
+    this.before();
+    this.draw(0);
+}
+
+_Animation.prototype.showLastFrame = function () {
+    this.draw(1);
+    this.after();
+}
+
+/**
+ * Abort the animation by rejecting {@member finished}.
+ * This can be used to break out of a chain of animation callbacks.
+ */
+_Animation.prototype.abort = function () {
+    this.exitLoop();
+    this.pause();
+    this.reset();
+}
+
+/**
+ * Initializes {@member finished} and resets the animation progress.
+ */
+_Animation.prototype.reset = function () {
+    this.elapsedTime = 0;
+    this.startTime = performance.now();
+    let start = true;
+
+    this.finished = new Promise((resolve, reject) => {
+        this.exitLoop = reject;
+        let animate = async(time) => {
+            this.elapsedTime = time - this.startTime;
+
+            let timeFraction = this.elapsedTime /    // Call duration if it is a function.
+                (this.duration instanceof Function ? this.duration() : this.duration);
+            
+
+            if (timeFraction < 0) timeFraction = 0;
+            if (timeFraction > 1) timeFraction = 1;
+        
+            let progress = this.timing(timeFraction);
+
+            await this.pauseLock;    // Wait if the animation is paused.
+
+            if (start) {
+                this.before();
+                start = false;
+            }
+            this.draw(progress);
+        
+            if (timeFraction < 1) {
+                requestAnimationFrame(animate);     // Draw the next frame.
+            } else {
+                resolve();      // Resolve the promise.
+                this.after();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    });
 }

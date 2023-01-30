@@ -84,35 +84,33 @@ window.onload = function() {
     doc.progress.min = 0;
     doc.progress.max = animQueue.length;
 
+
     doc.prev.onclick = () => {
+        let i = doc.progress.value;
+    
+        curAnim?.abort();
+        curAnim?.finished.catch(() => {});
+
         if (running) doc.run.click();
 
-        curAnim?.abort();
-
-        let i = --doc.progress.value;
-        if (i < 0) i = 0;
-
-        playQueue(animQueue, i);
-        animQueue[i]?.pause();
-        animQueue[i]?.showFirstFrame();
+        playQueue(animQueue, --i);
+        curAnim?.showFirstFrame();
     }
-
-    let prevAnim = null;
 
     doc.next.onclick = () => {
         let i = doc.progress.value;
 
-        if (running) doc.run.click();
+        curAnim?.abort();
+        curAnim?.finished.catch(() => {});
 
-        prevAnim?.finished?.catch(() => {});
-        prevAnim?.abort();
-        animQueue[i]?.abort();
-        prevAnim = animQueue[i];
-        animQueue[i].play();
-        animQueue[i].finished.catch(() => {});
-        
-        playQueue(animQueue, ++i);
-        animQueue[i]?.pause();
+        if (running) {
+            doc.run.click();
+            playQueue(animQueue, ++i);
+            curAnim?.showFirstFrame();
+        } else {
+            curAnim?.play();
+            playQueue(animQueue, ++i);
+        }
     }
 
     doc.run.click = () => {
@@ -126,21 +124,20 @@ window.onload = function() {
             if (doc.progress.value >= animQueue.length) {
                 playQueue(animQueue, 0);
             } else {
-                curAnim.play();
+                curAnim?.play();
             }
         }
     }
 
     doc.run.onclick = doc.run.click;
 
-    let prev = null;
+    let inputFlag = false;
 
-    doc.progress.onmousedown = () => {
-        prev = doc.progress.value;
-        if (running) curAnim?.pause();
-    }
     doc.progress.oninput = () => {
         let i = doc.progress.value;
+
+        inputFlag = true;
+        curAnim?.pause();
 
         i < animQueue.length ?
             animQueue[i].showFirstFrame() :
@@ -149,21 +146,17 @@ window.onload = function() {
     doc.progress.onmouseup = () => {
         let i = doc.progress.value;
 
-        if (prev != i) {
-            animQueue[prev]?.abort();
+        if (inputFlag) {
+            curAnim?.abort();
             playQueue(animQueue, i);
-            curAnim.pause();
-        } 
-        if (running) {
-            curAnim.play();
         }
+        inputFlag = false; 
     }
 
     let start = animQueue.length - 32;
 
     animQueue[start].showFirstFrame();
     playQueue(animQueue, start);
-    animQueue[start].pause();
 }
 
 /**
@@ -175,6 +168,8 @@ window.onload = function() {
  */
 function playQueue(animQueue, i) {
     doc.progress.value = i;
+
+    if (i < 0) i = 0;
     
     if (i >= animQueue.length) {
         curAnim = null;
@@ -184,9 +179,11 @@ function playQueue(animQueue, i) {
 
     curAnim = animQueue[i];
     
-    animQueue[i].play();
+    if (running) animQueue[i].play();
 
     animQueue[i].finished.then(() => {
+        animQueue[i].pause();
+        animQueue[i].reset();
         playQueue(animQueue, ++i);
     }, 
     () => {console.log('exited')});
