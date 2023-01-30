@@ -137,7 +137,7 @@ window.onload = function() {
 
     doc.progress.onmousedown = () => {
         prev = doc.progress.value;
-        curAnim?.pause();
+        if (running) curAnim?.pause();
     }
     doc.progress.oninput = () => {
         let i = doc.progress.value;
@@ -152,11 +152,11 @@ window.onload = function() {
         if (prev != i) {
             animQueue[prev]?.abort();
             playQueue(animQueue, i);
-        } else {
-            animQueue[prev]?.play();
+            curAnim.pause();
+        } 
+        if (running) {
+            curAnim.play();
         }
-
-        if (!running) animQueue[i]?.pause();
     }
 
     let start = animQueue.length - 32;
