@@ -15,10 +15,10 @@ class BTree{
       s.isLeaf = false;                                         //since this is the root, it is not a leaf
       s.childNodes.push(r);                                     //make the old root, s (new root) leftmost child
       s.splitChild(0);                                 //split the old root, which is s's new child
-      s.insert_nonfull(key);                                    //root was split, now try to insert the key
+      s.insertNonFull(key);                                    //root was split, now try to insert the key
     }
     else{
-      r.insert_nonfull(key);                                    //the root did not need to be split, try to insert the key
+      r.insertNonFull(key);                                    //the root did not need to be split, try to insert the key
     }
   }
 
@@ -29,6 +29,7 @@ class BTree{
   delete(key){
     return this.root.delete(key);
   }
+
 }
 
 
@@ -49,17 +50,20 @@ class Node {
     right.isLeaf = left.isLeaf                                //if the left child was a leaf, that means the new right node must be a leaf
 
     //move the keys from left to right child
-    for(let j = this.t; j <= 2*this.t - 2; j++){              //we split the child in half at the mid-point index (t-1), left side might be bigger
+    for(let j = this.t; j < left.keys.length; j++){              //we split the child in half at the mid-point index (t-1), left side might be bigger
       right.keys.push(left.keys[j]);                          //assign the rightmost keys of the left child to the right child
     }
 
     //move the children form left to right child
+    let childrenMoved = 0;
     if (!left.isLeaf){
-      for(let j = this.t; j <= 2*this.t - 1; j++){                          //we split the child in half at the mid-point index (t-1), left side might be bigger
+      for(let j = this.t; j <left.childNodes.length; j++){                          //we split the child in half at the mid-point index (t-1), left side might be bigger
         right.childNodes.push(left.childNodes[j]);                          //assign the rightmost keys of the left child to the right child
+        childrenMoved++;
       }
     }
-    left.length = this.t;                                                   //essentially delete from the left what was moved to right
+    left.keys.length = this.t;                                                   //essentially delete from the left what was moved to right
+    left.childNodes.length = left.childNodes.length - childrenMoved;
 
     //insert right as a child of the new parent
     for(let j = this.childNodes.length - 1; j > childIndex; j--){         //fixme did I use the right length here?
@@ -73,7 +77,7 @@ class Node {
     }
     this.keys[childIndex] = left.keys[left.keys.length-1]  ;               //slot the new median key (rightmost index of left array) into the new parent array
 
-    left.length = left.length - 1;                                        //get rid of the median from the end of the left node
+    left.keys.length = left.keys.length - 1;                                        //get rid of the median from the end of the left node
   }
 
   //resursively inserts a node into the tree
@@ -112,7 +116,7 @@ class Node {
     }
 
     if(i < this.keys.length && key === this.keys[i]){                     //we found the key
-      return {this,i};                                                    //return the node the key was found out and the index of the key in the node  //fixme may need to change this later
+      return "found";                                                    //return the node the key was found out and the index of the key in the node  //fixme may need to change this later
     }
 
     else if(this.isLeaf){                                                 //we are at a leaf and didn't see the key, the key doesn't exit
@@ -123,7 +127,7 @@ class Node {
     }
   }
 
-  //deletes a node from the B-tree given a key
+  //deletes a node from the B-tree given a key  //fixme cannot delete root?
   delete(key){
     let index = this.keys.indexOf(key);                                     //check if the key we are looking for is in the current node
     if(index !== -1){                                                       //the key is in the current node
@@ -146,15 +150,21 @@ class Node {
       if(childToRecurseOnIndex === this.keys.length){
         wasFarRightChild = true;
       }
-      if(this.childNodes[childToRecurseOnIndex].length < this.t){
-        this.fill(childToRecurseOnIndex);                                       //premptive fill on the way down (has t-1 nodes, need to make sure it has more than that)
+      let flag = true;
+      if(this.childNodes[childToRecurseOnIndex].keys.length < this.t){
+        flag = this.fill(childToRecurseOnIndex);                                       //premptive fill on the way down (has t-1 nodes, need to make sure it has more than that)
       }
 
-      if(wasFarRightChild && index > this.keys.length){
-        this.childNodes[index-1].delete(key);                             //we lost a child at the end after fill/merge and we need to recurse on one less
+      if(flag){
+        if(wasFarRightChild && childToRecurseOnIndex > this.keys.length){
+          this.childNodes[childToRecurseOnIndex-1].delete(key);                             //we lost a child at the end after fill/merge and we need to recurse on one less
+        }
+        else{
+          this.childNodes[childToRecurseOnIndex].delete(key);                               //recurse on child which we know has at least t keys
+        }
       }
       else{
-        this.childNodes[index].delete(key);                               //recurse on child which we know has at least t keys
+        this.delete(key);
       }
     }
   }
@@ -165,7 +175,7 @@ class Node {
     for(let i = index+1; i < this.keys.length; i++){
       this.keys[i-1] = this.keys[i];                                        //move all keys after the deleted index back one to fill in the gap
     }
-    this.keys.length = this.keys.length-1;                                 //reduce the length of the keys by one after deletion
+    this.keys.length--;                                 //reduce the length of the keys by one after deletion
   }
 
   //deletes a key from a non-leaf (index is the index of the key to be removed)
@@ -188,8 +198,12 @@ class Node {
 
     //case 2c: neither the left or the right child has at least t keys (merge left and right children and the key), recursively delete the key from the merged array
     else{
-      this.merge(index);
-      this.childNodes[index].delete(key);                                       //delete the key from the left child which everything was merged into
+      if(this.merge(index)){
+        this.childNodes[index].delete(key);                                       //delete the key from the left child which everything was merged into
+      }
+      else{
+        this.delete(key);
+      }
     }
   }
 
@@ -226,16 +240,23 @@ class Node {
     }
 
     //delete the parent key and move everything to the left
-    for(let i = index + 1; i < this.keys.length; i++){
+    for(let i = index + 1; i <= this.keys.length; i++){
       this.keys[i-1] = this.keys[i];                                             //move everything to the left
     }
 
     //update the child pointers since we got rid of one child
-    for(let i = index + 2; i < this.keys.length; i++){                          //start at i + 2 because right child deleted was at i + 1
+    for(let i = index + 2; i <= this.keys.length; i++){                          //start at i + 2 because right child deleted was at i + 1
       this.childNodes[i-1] = this.childNodes[i];                                 //move everything to the left
     }
     this.keys.length = this.keys.length - 1;                                    //deleted a key so the length of the keys array gets reduces by 1
     this.childNodes.length = this.childNodes.length - 1;                        //deleted the right child so the length of the children array gets reduced by 1
+    if(this.keys.length === 0){
+      this.keys = left.keys;
+      this.childNodes = left.childNodes;
+      this.isLeaf = left.isLeaf;            //fixme does this work if we are at a root
+      return false;
+    }
+    return true;
   }
 
   //returns the index of the child to recurse on
@@ -252,21 +273,23 @@ class Node {
   fill(index){
 
     //case 3a: node only has t-1 keys, but one of its siblings has t keys
-    if(index !== 0 && this.childNodes[index - 1].keys.length >= this.t){           //left sibling has at least t keys, do a right rotation
-      this.rightRotation(index);
-    }
-    else if(index !== this.childNodes.length && this.childNodes[index+1].keys.length >= this.t){      //right sibling has at least t keys so do a left rotation
+    if(index < this.childNodes.length-1 && this.childNodes[index+1].keys.length >= this.t){      //right sibling has at least t keys so do a left rotation
       this.leftRotation(index);
     }
+    else if(index !== 0 && this.childNodes[index - 1].keys.length >= this.t){           //left sibling has at least t keys, do a right rotation
+      this.rightRotation(index);
+    }
+
     //case 3b: node and both of its siblings only have t-1 keys (merge everything)
     else{
       if(index === this.keys.length){                                                                    //merge with left sibling if the last child
-        this.merge(index-1);
+        return this.merge(index-1);
       }
       else{                                                                                             //merge with right sibling if not the last child
-        this.merge(index - 1);
+        return this.merge(index);
       }
     }
+    return true;
   }
 
   //borrows a key from the right sibling for the fill operation
@@ -282,19 +305,20 @@ class Node {
 
     this.keys[index] = right.keys[0];                                           //move the number from the right sibling up into the parent
 
-    for(let i = 0; i < right.keys.length; i++){                                 //shift the keys in the sibling back 1
+    for(let i = 1; i < right.keys.length; i++){                                 //shift the keys in the sibling back 1
       right.keys[i-1] = right.keys[i];
     }
 
     if(!right.isLeaf){
-      for(let i = 0; i <= right.keys.length; i++){                              //shift the children in the sibling back 1
+      for(let i = 1; i < right.childNodes.length; i++){                              //shift the children in the sibling back 1
         right.childNodes[i-1] = right.childNodes[i];
       }
+      right.childNodes.length--;
     }
 
     //we got rid of a node from the sibling so decrement its length by 1
     right.keys.length --;
-    right.childNodes.length--;
+
   }
 
   //borrows a key from the left sibling for the fill operation
@@ -307,22 +331,137 @@ class Node {
     }
 
     if(!right.isLeaf){                                                               //check if we need to move the right's children to the right if there are any
-      for(let i = right.keys.length - 1; i >= 0; i--){
-        right.keys[i+1] = right.keys[i];                                             //make a space at the beginning by moving all children to the right
+      for(let i = right.childNodes.length - 1; i >= 0; i--){
+        right.childNodes[i+1] = right.childNodes[i];                                             //make a space at the beginning by moving all children to the right
       }
     }
 
-    right.keys[0] = keys[index-1];                                                //bring down the parent (use index-1 because we are at a right child)
+    right.keys[0] = this.keys[index-1];                                                //bring down the parent (use index-1 because we are at a right child)
 
     //move the left sibling's right child to be the right sibling leftmost child
     if(!right.isLeaf){
       right.childNodes[0] = left.childNodes[left.keys.length];
+      left.childNodes.length--;
     }
 
     //move the node from the left sibling up into the parent
     this.keys[index-1] = left.keys[left.keys.length-1];
 
     left.keys.length--;                                                         //borrowed a key from the left sibling so decrement the lengths
-    left.childNodes.length--;
+
   }
 }
+
+let b_tree = new BTree(2);
+//case 1
+b_tree.insert(1);
+b_tree.insert(3);
+b_tree.insert(4);
+b_tree.insert(5);
+b_tree.insert(2);
+b_tree.delete(5);
+
+//case 3a:
+b_tree.delete(4);
+
+//case 3b:
+b_tree.insert(4);
+b_tree.delete(2);
+b_tree.delete(1);
+
+//reset
+b_tree.delete(3);
+b_tree.delete(4);
+
+//case 2a
+b_tree.insert(10);
+b_tree.insert(9);
+b_tree.insert(11);
+b_tree.insert(8);
+b_tree.insert(12);
+b_tree.insert(7);
+b_tree.insert(13);
+b_tree.insert(6);
+b_tree.insert(14);
+b_tree.insert(5);
+b_tree.insert(15);
+b_tree.insert(4);
+b_tree.insert(16);
+b_tree.insert(3);
+b_tree.insert(17);
+b_tree.insert(2);
+b_tree.insert(18);
+b_tree.insert(1);
+b_tree.insert(19);
+b_tree.insert(0);
+b_tree.insert(20);
+b_tree.delete(2);
+
+//case 2b
+b_tree.delete(10);
+b_tree.delete(9);
+b_tree.delete(11);
+b_tree.delete(8);
+b_tree.delete(12);
+b_tree.delete(7);
+b_tree.delete(13);
+b_tree.delete(6);
+b_tree.delete(14);
+b_tree.delete(5);
+b_tree.delete(15);
+b_tree.delete(4);
+b_tree.delete(16);
+b_tree.delete(3);
+b_tree.delete(17);
+b_tree.delete(2);
+b_tree.delete(18);
+b_tree.delete(1);
+b_tree.delete(19);
+b_tree.delete(0);
+b_tree.delete(20);
+
+b_tree.insert(10);
+b_tree.insert(9);
+b_tree.insert(11);
+b_tree.insert(8);
+b_tree.insert(12);
+b_tree.insert(7);
+b_tree.insert(13);
+b_tree.insert(6);
+b_tree.insert(14);
+b_tree.insert(5);
+b_tree.insert(15);
+b_tree.insert(4);
+b_tree.insert(16);
+b_tree.insert(3);
+b_tree.insert(17);
+b_tree.insert(2);
+b_tree.insert(18);
+b_tree.insert(1);
+b_tree.insert(19);
+b_tree.insert(0);
+b_tree.insert(20);
+b_tree.delete(18);
+
+console.log(b_tree.search(10));
+console.log(b_tree.search(9));
+console.log(b_tree.search(11));
+console.log(b_tree.search(8));
+console.log(b_tree.search(12));
+console.log(b_tree.search(7));
+console.log(b_tree.search(13));
+console.log(b_tree.search(6));
+console.log(b_tree.search(14));
+console.log(b_tree.search(5));
+console.log(b_tree.search(15));
+console.log(b_tree.search(4));
+console.log(b_tree.search(16));
+console.log(b_tree.search(3));
+console.log(b_tree.search(17));
+console.log(b_tree.search(2));
+console.log(b_tree.search(18));
+console.log(b_tree.search(1));
+console.log(b_tree.search(19));
+console.log(b_tree.search(0));
+console.log(b_tree.search(20));
+b_tree;
