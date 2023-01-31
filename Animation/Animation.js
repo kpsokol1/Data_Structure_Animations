@@ -34,13 +34,17 @@ function CompositeAnimation(...animations) {
 Object.assign(CompositeAnimation.prototype, _Animation.prototype);
 
 CompositeAnimation.prototype.play = function () {
-    this.paused = false;
-    this.sequence[this.current].play();
+    if (this.paused) {
+        this.paused = false;
+        this.sequence[this.current].play();
+    }
 }
 
 CompositeAnimation.prototype.pause = function () {
-    this.paused = true;
-    this.sequence[this.current].pause();
+    if (!this.paused) {
+        this.paused = true;
+        this.sequence[this.current].pause();
+    }
 }
 
 CompositeAnimation.prototype.showFirstFrame = function () {
@@ -52,7 +56,8 @@ CompositeAnimation.prototype.showLastFrame = function () {
 }
 
 CompositeAnimation.prototype.abort = function () {
-    this.sequence.forEach(anim => anim.abort());
+    this.sequence[this.current].abort();
+    this.pause();
     this.reset();
 }
 
@@ -62,7 +67,6 @@ CompositeAnimation.prototype.reset = function () {
 
     this.finished = new Promise((resolve, reject) => {
         let playNext = () => {
-            console.log(this.current);
             if (!this.paused) this.sequence[this.current].play();
             this.sequence[this.current].finished.then(() => {
                 if (++this.current >= this.sequence.length) {

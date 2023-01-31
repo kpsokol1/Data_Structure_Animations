@@ -240,7 +240,7 @@ VisualTree.prototype.moveCursor = function(nodeA, nodeB) {
 
     let d = Math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2);
 
-    let duration = () => { return animInterval() * d / 200; }
+    let duration = () => { return animInterval() * d / 200; };
     
     let draw = (progress) => {
         this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
