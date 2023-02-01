@@ -34,159 +34,87 @@ window.onload = function() {
     doc.addElement('progress');
     doc.addElement('speed');
 
-    let tree = new VisualTree(doc.canvas);
-    let animQueue = [];
-    animQueue = animQueue.concat(tree.insert(5));
-    animQueue = animQueue.concat(tree.insert(3));
-    animQueue = animQueue.concat(tree.insert(8));
-    animQueue = animQueue.concat(tree.insert(1));
-    animQueue = animQueue.concat(tree.insert(0));
-    animQueue = animQueue.concat(tree.insert(2));
-    animQueue = animQueue.concat(tree.insert(4));
-    animQueue = animQueue.concat(tree.insert(6));
-    animQueue = animQueue.concat(tree.insert(7));
-    animQueue = animQueue.concat(tree.insert(9));
-    animQueue = animQueue.concat(tree.insert(3.5));
-    animQueue = animQueue.concat(tree.insert(3.2));
-    animQueue = animQueue.concat(tree.insert(2.1));
-    animQueue = animQueue.concat(tree.insert(1.5));
-    animQueue = animQueue.concat(tree.insert(0.5));
-    animQueue = animQueue.concat(tree.insert(-1));
-    animQueue = animQueue.concat(tree.insert(5.5));
-    animQueue = animQueue.concat(tree.insert(4.5));
-    animQueue = animQueue.concat(tree.insert(8.5));
-    animQueue = animQueue.concat(tree.insert(10));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.left));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateLeft(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.right));
-    animQueue = animQueue.concat(tree.rotateRight(tree.root.right));
-
-    doc.progress.min = 0;
-    doc.progress.max = animQueue.length;
-
-
-    doc.prev.onclick = () => {
-        let i = doc.progress.value;
+    let vTree = new VisualTree(doc.canvas);
+    let tree = new BinaryTree(vTree);
+    let controller = new Controller(0);
     
-        curAnim?.abort();
-        curAnim?.finished.catch(() => {});
-
-        if (running) doc.run.click();
-
-        playQueue(animQueue, --i);
-        curAnim?.showFirstFrame();
-    }
-
-    doc.next.onclick = () => {
-        let i = doc.progress.value;
-
-        curAnim?.abort();
-        curAnim?.finished.catch(() => {});
-
-        if (running) {
-            doc.run.click();
-            playQueue(animQueue, ++i);
-            curAnim?.showFirstFrame();
-        } else {
-            curAnim?.play();
-            playQueue(animQueue, ++i);
-        }
-    }
-
-    doc.run.click = () => {
-        running = !running;
-        
-        if (!running) {
-            doc.run.innerHTML = "run >>";
-            curAnim?.pause();
-        } else {
-            doc.run.innerHTML = "pause ||";
-            if (doc.progress.value >= animQueue.length) {
-                playQueue(animQueue, 0);
-            } else {
-                curAnim?.play();
-            }
-        }
-    }
-
-    doc.run.onclick = doc.run.click;
-
-    let inputFlag = false;
-
-    doc.progress.oninput = () => {
-        let i = doc.progress.value;
-
-        inputFlag = true;
-        curAnim?.pause();
-
-        i < animQueue.length ?
-            animQueue[i].showFirstFrame() :
-            animQueue[i-1].showLastFrame();
-    }
-    doc.progress.onmouseup = () => {
-        let i = doc.progress.value;
-
-        if (inputFlag) {
-            curAnim?.abort();
-            playQueue(animQueue, i);
-        }
-        inputFlag = false; 
-    }
-
-    let start = animQueue.length - 32;
-
-    animQueue[start].showFirstFrame();
-    playQueue(animQueue, start);
-}
-
-/**
- * Play the animations in the queue starting at i.
- * 
- * @param {Animation[]} animQueue - The array of animations to be played.
- * @param {number} i - The index of the first animation to play.
- * @returns {undefined}
- */
-function playQueue(animQueue, i) {
-    doc.progress.value = i;
-
-    if (i < 0) i = 0;
+    tree.insert(5);
+    tree.insert(3);
+    tree.insert(8);
+    tree.insert(1);
+    tree.insert(0);
+    tree.insert(2);
+    tree.insert(4);
+    tree.insert(6);
+    tree.insert(7);
+    tree.insert(9);
+    tree.insert(3.5);
+    tree.insert(3.2);
+    tree.insert(2.1);
+    tree.insert(1.5);
+    tree.insert(0.5);
+    tree.insert(-1);
+    tree.insert(5.5);
+    tree.insert(4.5);
+    tree.insert(8.5);
+    tree.insert(10);
     
-    if (i >= animQueue.length) {
-        curAnim = null;
-        if (running) doc.run.click();
-        return;
+    tree.rotateRight(tree.root);
+    tree.rotateRight(tree.root);
+    tree.rotateLeft(tree.root);
+    tree.rotateLeft(tree.root);
+    tree.rotateLeft(tree.root);
+    tree.rotateLeft(tree.root);
+    tree.rotateRight(tree.root);
+    tree.rotateRight(tree.root);
+    tree.rotateRight(tree.root.left)
+    tree.rotateRight(tree.root.left)
+    tree.rotateLeft(tree.root.left);
+    tree.rotateLeft(tree.root.left);
+    tree.rotateLeft(tree.root.left);
+    tree.rotateLeft(tree.root.left);
+    tree.rotateRight(tree.root.left);
+    tree.rotateRight(tree.root.left);
+    tree.rotateRight(tree.root.right);
+    tree.rotateRight(tree.root.right);
+    tree.rotateLeft(tree.root.right);
+    tree.rotateLeft(tree.root.right);
+    tree.rotateLeft(tree.root.right);
+    tree.rotateLeft(tree.root.right);
+    tree.rotateRight(tree.root.right);
+    tree.rotateRight(tree.root.right);
+
+    doc.prev.onclick = function () {
+        controller.stepBack();
     }
 
-    curAnim = animQueue[i];
-    
-    if (running) animQueue[i].play();
+    doc.next.onclick = function () {
+        controller.stepForward();
+    }
 
-    animQueue[i].finished.then(() => {
-        animQueue[i].pause();
-        animQueue[i].reset();
-        playQueue(animQueue, ++i);
-    }, 
-    () => {console.log('exited')});
+    doc.run.onclick = function () {
+        controller.toggleRun();
+    }
+
+    doc.progress.oninput = function () {
+        controller.slideProgress();
+    }
+    doc.progress.onmouseup = function () {
+        controller.setProgress();
+    }
+
+    controller.animQueue = tree.animQueue;
+    controller.prev = doc.prev;
+    controller.next = doc.next;
+    controller.run = doc.run;
+    controller.progress = doc.progress;
+
+    controller.progress.min = 0;
+    controller.progress.max = controller.animQueue.length;
+    controller.progress.value = 0;
+
+    controller.animQueue[0].showFirstFrame();
+    controller.playQueue(0);
 }
 
 function animInterval() {
