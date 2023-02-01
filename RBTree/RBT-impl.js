@@ -8,6 +8,16 @@ class RBTNode {
         this.right = null;
         this.color = RED;
         this.parent = null;
+        this.isLeaf = (key==null && value==null);
+        if (this.isLeaf) this.color = BLACK;
+    }
+    linkLeft(node) {
+        this.left = node;
+        node.parent = this;
+    }
+    linkRight(node) {
+        this.right = node;
+        node.parent = this;
     }
     isRed() {
         return this.color == RED;
@@ -70,14 +80,61 @@ class RBTNode {
         return -1;
         
     }
+    getGrandparent() {
+        if (this.parent == null) return null;
+        return this.parent.parent;
+    }
+    getUncle() {
+        if (this.parent == null || this.parent.parent == null) return null;
+        if (this.parent == this.parent.parent.left) return this.parent.parent.right;
+        else return this.parent.parent.left;
+    }
+    getSibling() {
+        if (this.parent == null) return null;
+        if (this == this.parent.left) return this.parent.right;
+        else return this.parent.left;
+    }
+    getPredecessor() {
+        let node = this;
+        if (node.left != null) {
+            node = node.left;
+            while (node.right != null) node = node.right;
+            return node;
+        }
+        while (node.parent != null && node.parent.left == node) node = node.parent;
+        return node.parent;
+    }
+    getSuccessor() {
+        let node = this;
+        if (node.right != null) {
+            node = node.right;
+            while (node.left != null) node = node.left;
+            return node;
+        }
+        while (node.parent != null && node.parent.right == node) node = node.parent;
+        return node.parent;
+    }
+    getMin() {
+        let node = this;
+        while (node.left != null) node = node.left;
+        return node;
+    }
+    getMax() {
+        let node = this;
+        while (node.right != null) node = node.right;
+        return node;
+    }
 }
 class RBTree {
     constructor() {
         this.root = null;
         this.size = 0;
+        this.leaf = new RBTNode(null, null);
     }
     insert(key, value) {
         let node = new RBTNode(key, value);
+        node.linkLeft(this.leaf);
+        node.linkRight(this.leaf);
         this.insertNode(node);
         this.size++;
         return node;
@@ -91,21 +148,73 @@ class RBTree {
         let curr = this.root;
         while (true) {
             if (node.key < curr.key) {
-                if (curr.left == null) {
+                if (curr.left == this.leaf) {
                     curr.left = node;
                     node.parent = curr;
                     break;
                 } else curr = curr.left;
             } else {
-                if (curr.right == null) {
+                if (curr.right == this.leaf) {
                     curr.right = node;
                     node.parent = curr;
                     break;
                 } else curr = curr.right;
             }
         }
-        //this.insertCase1(node);
+        this.balanceInsert(node);
     }
+    balanceInsert(node) {
+        if (node.parent == null) {
+            node.setBlack();
+        } else if (node.parent.isBlack()) {
+            return;
+        } else if (node.getUncle().isRed()) {
+            node.parent.setBlack();
+            node.getUncle().setBlack();
+            node.getGrandparent().setRed();
+            this.balanceInsert(node.getGrandparent());
+        } else {
+            if (node == node.parent.right && node.parent == node.getGrandparent().left) {
+                this.rotateLeft(node.parent);
+                node = node.left;
+            } else if (node == node.parent.left && node.parent == node.getGrandparent().right) {
+                this.rotateRight(node.parent);
+                node = node.right;
+            }
+            node.parent.setBlack();
+            node.getGrandparent().setRed();
+            if (node == node.parent.left) {
+                this.rotateRight(node.getGrandparent());
+            } else {
+                this.rotateLeft(node.getGrandparent());
+            }
+        }
+    }
+    replaceNode(oldNode, newNode) {
+        if (oldNode.parent == null) {
+            this.root = newNode;
+        } else {
+            if (oldNode == oldNode.parent.left) {
+                oldNode.parent.left = newNode;
+            } else {
+                oldNode.parent.right = newNode;
+            }
+        }
+        newNode.parent = oldNode.parent;
+    }
+    rotateLeft(node) {
+        let right = node.right;
+        this.replaceNode(node, right);
+        node.linkRight(right.left);
+        right.linkLeft(node);
+    }
+    rotateRight(node) {
+        let left = node.left;
+        this.replaceNode(node, left);
+        node.linkLeft(left.right);
+        left.linkRight(node);
+    }
+
 }
 class RBTVisualize {
     constructor() {
