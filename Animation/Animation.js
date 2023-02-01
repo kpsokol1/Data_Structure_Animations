@@ -69,9 +69,11 @@ CompositeAnimation.prototype.reset = function () {
         let playNext = () => {
             if (!this.paused) this.sequence[this.current].play();
             this.sequence[this.current].finished.then(() => {
+                this.sequence[this.current].pause();
                 if (++this.current >= this.sequence.length) {
-                    this.current = 0;
                     resolve();
+                    this.paused = true;
+                    this.reset();
                 } else
                     playNext();
             }, reject);

@@ -2,127 +2,7 @@
  * @author Sungmin Kim
  */
 
-
-/**
- * Get the heap index of the left child 
- * @see VisualTree.this.getPos
-*/
-var leftNdx = (index) => {
-    return index * 2 + 1;
-}
-/**Get the heap index of the right child */
-var rightNdx = (index) => {
-    return index * 2 + 2;
-}
-/**Get the heap index of the parent */
-var parentNdx = (index) => {
-    return Math.floor((index - 1)/2);
-}
-
-/**
- * Returns a VisualNode object.
- * 
- * Supports functions for drawing individual nodes
- * as well as drawing the entire subtree.
- * 
- * @param {*} key - the key of the node
- */
-function VisualNode(key) {
-    this.key = key;
-    this.x = 0;
-    this.y = 0;
-    this.left = null;
-    this.right = null;
-    this.parent = null;
-    this.color = this.DEFAULT_COLOR;
-    this.index = 0;
-}
-
-VisualNode.prototype.RADIUS = 20;
-VisualNode.prototype.DEFAULT_COLOR = 'red';
-
-/**Clone the node and all of its children. */
-VisualNode.prototype.cloneTree = function () {
-    let node = this.clone();
-
-    if (this.left)  {
-        node.left = this.left.cloneTree();
-        node.left.parent = this;
-    }
-    if (this.right) {
-        node.right = this.right.cloneTree();
-        node.right.parent = this;
-    }
-    return node;
-}
-
-/**Clone the individual node only */
-VisualNode.prototype.clone = function () {
-    let node = new VisualNode(this.key);
-    node.x = this.x;
-    node.y = this.y;
-    node.color = this.color;
-    node.index = this.index;
-
-    return node;
-};
-
-/**Draw the individual node */
-VisualNode.prototype.draw = function (canvas) {
-    let ctx = canvas.getContext('2d');
-
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.RADIUS, 0, Math.PI * 2, true);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'black'
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.RADIUS/2, 0, Math.PI * 2, true);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-    ctx.fillStyle = 'black';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(this.key, this.x, this.y, 40);
-};
-
-/**Draw a highlighted outline around the node */
-VisualNode.outline = function (canvas, x, y, weight) {
-    let ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    ctx.strokeStyle = 'cyan';
-    ctx.lineWidth = 1 * weight;
-    ctx.arc(x, y, 20, 0, Math.PI * 2, true);
-    ctx.stroke();
-};
-
-/**Draw the node and all of its children */
-VisualNode.prototype.drawTree = function (canvas) {
-    let ctx = canvas.getContext('2d');
-
-    if (this.left) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.left.x, this.left.y);
-        ctx.stroke();
-        this.left.drawTree(canvas);
-    }
-    if (this.right) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.right.x, this.right.y);
-        ctx.stroke();
-        this.right.drawTree(canvas);
-    }
-    this.draw(canvas);
-};
+let VisualTree = (() => {
 
 /**
  * Returns a VisualTree object.
@@ -138,14 +18,133 @@ VisualNode.prototype.drawTree = function (canvas) {
  * @constructor
  * @param {HTMLCanvasElement} canvas - The canvas that the tree should be drawn onto.
  * 
- * @TODO Derive subclasses for RB-Trees and Binomial Trees.
+ * @TODO Derive subclass for Binomial Heap.
  */
 function VisualTree(canvas) {
     this.root = null;
     this.canvas = canvas;
+    this.animQueue = [];
+
+    this.canvas.getContext('2d').scale 
+    (
+        this.canvas.width / SCREEN_WIDTH,
+        this.canvas.height / SCREEN_HEIGHT
+    );
 }
 
-VisualTree.prototype.Node = VisualNode;
+
+/**
+ * Get the heap index of the left child 
+ * @see VisualTree.this.getPos
+*/
+function leftNdx(index) {
+    return index * 2 + 1;
+}
+/**Get the heap index of the right child */
+function rightNdx(index) {
+    return index * 2 + 2;
+}
+/**Get the heap index of the parent */
+function parentNdx(index) {
+    return Math.floor((index - 1)/2);
+}
+
+/**Clone the node and all of its children. */
+VisualTree.prototype.cloneTree = function (root) {
+    if (!root) return null;
+
+    let _root = this.cloneNode(root);
+
+    if (root.left)  {
+        _root.left = this.cloneTree(root.left);
+        _root.left.parent = _root;
+    }
+    if (root.right) {
+        _root.right = this.cloneTree(root.right);
+        _root.right.parent = _root;
+    }
+    return _root;
+}
+
+/**Clone the individual node only */
+VisualTree.prototype.cloneNode = function (node) {
+    if (!node) return null;
+
+    return {
+        key: node.key,
+        color: node.color,
+        index: node.index,
+        x: node.x,
+        y: node.y
+    }
+};
+
+const NODE_RADIUS = 20;
+
+/**Draw the individual node */
+VisualTree.prototype.drawNode = function (node) {
+    let ctx = this.canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2, true);
+    ctx.fillStyle = node.color;
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'black'
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, NODE_RADIUS/2, 0, Math.PI * 2, true);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(node.key, node.x, node.y, 40);
+};
+
+/**Draw a highlighted outline around the node */
+VisualTree.prototype.drawCursor = function (x, y, weight) {
+    let ctx = this.canvas.getContext('2d');
+    ctx.beginPath();
+    ctx.strokeStyle = 'cyan';
+    ctx.lineWidth = 1 * weight;
+    ctx.arc(x, y, 20, 0, Math.PI * 2, true);
+    ctx.stroke();
+};
+
+/**Draw the node and all of its children */
+VisualTree.prototype.drawTree = function (root) {
+    let ctx = this.canvas.getContext('2d');
+
+    if (root.left) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'black';
+        ctx.beginPath();
+        ctx.moveTo(root.x, root.y);
+        ctx.lineTo(root.left.x, root.left.y);
+        ctx.stroke();
+        this.drawTree(root.left);
+    }
+    if (root.right) {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'black';
+        ctx.beginPath();
+        ctx.moveTo(root.x, root.y);
+        ctx.lineTo(root.right.x, root.right.y);
+        ctx.stroke();
+        this.drawTree(root.right);
+    }
+    this.drawNode(root);
+};
+
+const MARGIN_TOP = 30;
+const MARGIN_LEFT = 50;
+const MAX_ROWS = 8;
+const SCREEN_HEIGHT = 500;
+const SCREEN_WIDTH = 1000;
+const DIFF_Y = SCREEN_HEIGHT / MAX_ROWS;
+const DIFF_X = SCREEN_WIDTH - MARGIN_LEFT * 2;
 
 /**
  * Calculates the coordinate position of the node in question
@@ -157,19 +156,18 @@ VisualTree.prototype.Node = VisualNode;
  * @returns {{x: number, y: number}} position
  */
 VisualTree.prototype.getPos = function (index) {
-    const MARGIN_TOP = 30;
-    const MARGIN_LEFT = 50;
-    const MAX_ROWS = 12;
-    const height = this.canvas.height / MAX_ROWS;
-    const width = this.canvas.width - MARGIN_LEFT * 2;
-
     let depth = Math.floor(Math.log2(index + 1));
     let offset = index - ((2 ** depth) - 1) + 1;
 
     return {
-        x: width / ((2 ** depth) + 1) * offset + MARGIN_LEFT,
-        y: height * depth + MARGIN_TOP,
+        x: DIFF_X / ((2 ** depth) + 1) * offset + MARGIN_LEFT,
+        y: DIFF_Y * depth + MARGIN_TOP,
     }
+}
+
+VisualTree.prototype.clearCanvas = function () {
+    let ctx = this.canvas.getContext('2d');
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 }
 
 /**
@@ -178,32 +176,53 @@ VisualTree.prototype.getPos = function (index) {
  * @param {VisualNode} node - The node being inserted.
  * @returns {_Animation} An animation.
  */
-VisualTree.prototype.pushNode = function (node) {
-    let parent = node.parent.clone();
-    let _node = node.clone();
-    let root = this.root.cloneTree();
+VisualTree.prototype.binaryInsert = function (tree, node) {
+    if (!tree) {
+        node.index = 0;
+        node.x = this.getPos(0).x;
+        node.y = this.getPos(0).y;
+        return this.select(node);
+    }
 
-    _node.key < parent.key ? 
-        parent.left = _node : parent.right = _node;
+    let _parent = this.cloneNode(node.parent);
 
-    let a = this.getPos(parent.index);
-    let b = this.getPos(_node.index);
+    if (node.key < _parent.key) {
+        _parent.left = node;
+        node.index = leftNdx(_parent.index);
+    } else {
+        _parent.right = node;
+        node.index = rightNdx(_parent.index);
+    }
+    let a = this.getPos(_parent.index);
+    let b = this.getPos(node.index);
+
+    node.x = b.x;
+    node.y = b.y;
+
+    let _node = this.cloneNode(node);
+    let _root = this.cloneTree(tree);
+
+    let d = Math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2);
+    let duration = () => { return animInterval() * d / 200; };
 
     let draw = (progress) => {
         _node.x = a.x + (b.x - a.x) * progress;
         _node.y = a.y + (b.y - a.y) * progress;
-        this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-        root.drawTree(this.canvas);
-        this.Node.outline(this.canvas, _node.x, _node.y, 3);
+        this.clearCanvas();
+        this.drawTree(_root);
+        this.drawCursor(_node.x, _node.y, 3);
     };
     let after = () => {
-        this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-        root.drawTree(this.canvas);
-        parent.drawTree(this.canvas);
+        this.clearCanvas();
+        this.drawTree(_root);
+        this.drawTree(_parent);
     };
     let before = () =>{};
 
-    return new _Animation(Timing.linear, draw, animInterval, before, after);
+    let initial = this.select(tree, node.parent);
+    let push = new _Animation(Timing.linear, draw, duration, before, after);
+
+    return new CompositeAnimation(initial, push);
 }
 
 /**
@@ -212,19 +231,19 @@ VisualTree.prototype.pushNode = function (node) {
  * @param  {...VisualNode} nodes - The list of selected nodes.
  * @returns {_Animation} An animation that highlights each node.
  */
-VisualTree.prototype.select = function(...nodes) {
-    let root = this.root ? this.root.cloneTree() : nodes[0].clone();
+VisualTree.prototype.select = function(tree, ...nodes) {
+    let root = tree ? this.cloneTree(tree) : this.cloneNode(nodes[0]);
 
-    nodes = nodes.map(node => node.clone());
+    nodes = nodes.map(node => this.cloneNode(node));
 
     let before = () => {}
 
     let draw = (progress) => {
-        this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-        root.drawTree(this.canvas);
+        this.clearCanvas();
+        this.drawTree(root);
         // highlight the nodes
         let weight = 3 + 2 * Math.sin(progress * 6 * Math.PI);
-        nodes.forEach(node => this.Node.outline(this.canvas, node.x, node.y, weight));
+        nodes.forEach(node => this.drawCursor(node.x, node.y, weight));
     }
 
     let after = () => {}
@@ -232,83 +251,29 @@ VisualTree.prototype.select = function(...nodes) {
     return new _Animation(Timing.linear, draw, animInterval, before, after);
 }
 
-VisualTree.prototype.moveCursor = function(nodeA, nodeB) {
-    let root = this.root?.cloneTree();
+VisualTree.prototype.moveCursor = function(tree, nodeA, nodeB) {
+    let root = this.cloneTree(tree);
 
-    let a = nodeA ? nodeA.clone() : nodeB.clone();
-    let b = nodeB ? nodeB.clone() : nodeA.clone();
+    let a = nodeA ? this.cloneNode(nodeA) : this.cloneNode(nodeB);
+    let b = nodeB ? this.cloneNode(nodeB) : this.cloneNode(nodeA);
 
     let d = Math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2);
 
     let duration = () => { return animInterval() * d / 200; };
     
     let draw = (progress) => {
-        this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
-        root.drawTree(this.canvas);
+        this.clearCanvas();
+        this.drawTree(root);
 
         let x = a.x + (b.x - a.x) * progress;
         let y = a.y + (b.y - a.y) * progress;
-        this.Node.outline(this.canvas, x, y, 3);
+        this.drawCursor(x, y, 3);
     }
 
+    let select = this.select(tree, nodeA);
     let move = new _Animation(Timing.linear, draw, duration);
-    let select = this.select(b);
 
-    return new CompositeAnimation(move, select);
-}
-
-/**
- * Insert a node into the specified subtree and emit a series
- * of animations that illustrate the insertion.
- * 
- * @param {VisualNode} node - The root of the subtree.
- * @param {VisualNode} child - The node to insert.
- * @param {_Animation[]} animQueue - The running list of animations.
- * @returns {VisualNode} The new root of the subtree.
- */
-VisualTree.prototype.binaryInsert = function (node, child, animQueue) {
-    if (!node) {
-        let pos = this.getPos(child.index);
-        child.x = pos.x;
-        child.y = pos.y;
-
-        if (this.root) {
-            animQueue.push(this.pushNode(child));
-        } else {
-            animQueue.push(this.select(child));
-        }
-        return child;
-    }
-
-    child.parent = node;
-    if (child.key < node.key) {
-        child.index = leftNdx(node.index);
-        child.parent = node;
-        if (node.left) animQueue.push(this.moveCursor(node, node.left));
-        node.left = this.binaryInsert(node.left, child, animQueue);
-    } else {
-        child.index = rightNdx(node.index);
-        child.parent = node;
-        if (node.right) animQueue.push(this.moveCursor(node, node.right));
-        node.right = this.binaryInsert(node.right, child, animQueue);
-    }
-    return node;
-}
-
-/**
- * Insert a new node into the tree and emit an series of animations that
- * illustrate the insertion.
- * 
- * @param {*} key - The key of the node to insert.
- * @returns {_Animation[]} An array of animations.
- */
-VisualTree.prototype.insert = function (key) {
-    let node = new this.Node(key);
-
-    let animQueue = [];
-    if (this.root) animQueue.push(this.select(this.root));
-    this.root = this.binaryInsert(this.root, node, animQueue);
-    return animQueue;
+    return new CompositeAnimation(select, move);
 }
 
 /**
@@ -354,8 +319,10 @@ function flatten (node) {
  * 
  * @returns {_Animation} An animation illustrating the movement of the nodes.
  */
-VisualTree.prototype.updatePositions = function () {
-    let root = this.root.cloneTree();
+VisualTree.prototype.updatePositions = function (tree) {
+    reIndex(tree);
+
+    let root = this.cloneTree(tree);
     let nodes = flatten(root);
 
     let update = (node) => {
@@ -365,7 +332,7 @@ VisualTree.prototype.updatePositions = function () {
         update(node.left);
         update(node.right);
     }
-    update(this.root);
+    update(tree);
     
     nodes.forEach(node => {
         node.oldX = node.x;
@@ -373,79 +340,15 @@ VisualTree.prototype.updatePositions = function () {
     });
 
     let draw = (progress) => {
-        this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.clearCanvas();
         nodes.forEach(node => {
             node.x = node.oldX + (this.getPos(node.index).x - node.oldX) * progress;
             node.y = node.oldY + (this.getPos(node.index).y - node.oldY) * progress;
         });
-        root.drawTree(this.canvas);
+        this.drawTree(root);
     }
 
     return new _Animation(Timing.linear, draw, animInterval);
-}
-
-/**
- * Rotate the subtree rooted at the pivot to the left.
- * 
- * @param {VisualNode} pivot - The node to rotate around.
- * @returns {_Animation} An animation illustrating the rotation.
- */
-VisualTree.prototype.rotateLeft = function (pivot) {
-    let right = pivot.right;
-
-    // relink the nodes
-    pivot.right = right.left;
-    if (right.left != null) {
-        right.left.parent = pivot;
-    }
-    right.parent = pivot.parent;
-    if (pivot.parent == null) {
-        this.root = right;
-    } else if (pivot == pivot.parent.left) {
-        pivot.parent.left = right;
-    } else {
-        pivot.parent.right = right;
-    }
-    right.left = pivot;
-    pivot.parent = right;
-
-    // update the indices
-    reIndex(right);
-
-    // update the positions and emit the animation
-    return this.updatePositions();
-}
-
-/**
- * Rotate the subtree rooted at the pivot to the right.
- * 
- * @param {VisualNode} pivot - The node to rotate around.
- * @returns {_Animation} An animation illustrating the rotation.
- */
-VisualTree.prototype.rotateRight = function (pivot) {
-    let left = pivot.left;
-
-    // relink the nodes
-    pivot.left = left.right;
-    if (left.right != null) {
-        left.right.parent = pivot;
-    }
-    left.parent = pivot.parent;
-    if (pivot.parent == null) {
-        this.root = left;
-    } else if (pivot == pivot.parent.right) {
-        pivot.parent.right = left;
-    } else {
-        pivot.parent.left = left;
-    }
-    left.right = pivot;
-    pivot.parent = left;
-
-    // update the indexes
-    reIndex(left);
-
-    // update the positions and emit the animation
-    return this.updatePositions();
 }
 
 /**
@@ -454,7 +357,7 @@ VisualTree.prototype.rotateRight = function (pivot) {
  * Prefer "let root = this.root.cloneTree(); root.drawTree(this.canvas);" for animations.
  */
 VisualTree.prototype.render = function () {
-    this.root?.drawTree(this.canvas);
+    this.drawTree(this.root);
 }
 
 /**
@@ -468,3 +371,9 @@ VisualTree.prototype.print = function () {
         console.log(node.key, node.index);
     }
 }
+
+return VisualTree;
+
+})();
+
+
