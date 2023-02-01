@@ -25,6 +25,7 @@ class Doc {
 var doc = new Doc;
 var running = false;
 var curAnim;
+var controller;
 
 window.onload = function() {
     doc.addElement('canvas');
@@ -33,31 +34,32 @@ window.onload = function() {
     doc.addElement('next');
     doc.addElement('progress');
     doc.addElement('speed');
+    doc.addElement('operation');
+    doc.addElement('operand');
 
     let vTree = new VisualTree(doc.canvas);
     let tree = new BinaryTree(vTree);
-    let controller = new Controller(0);
-    
-    tree.insert(5);
-    tree.insert(3);
-    tree.insert(8);
-    tree.insert(1);
-    tree.insert(0);
-    tree.insert(2);
-    tree.insert(4);
-    tree.insert(6);
-    tree.insert(7);
-    tree.insert(9);
-    tree.insert(3.5);
-    tree.insert(3.2);
-    tree.insert(2.1);
-    tree.insert(1.5);
-    tree.insert(0.5);
-    tree.insert(-1);
-    tree.insert(5.5);
-    tree.insert(4.5);
-    tree.insert(8.5);
+   
+    tree.insert(50);
+    tree.insert(30);
+    tree.insert(80);
     tree.insert(10);
+    tree.insert(0);
+    tree.insert(20);
+    tree.insert(40);
+    tree.insert(60);
+    tree.insert(70);
+    tree.insert(90);
+    tree.insert(35);
+    tree.insert(32);
+    tree.insert(21);
+    tree.insert(15);
+    tree.insert(5);
+    tree.insert(-1);
+    tree.insert(55);
+    tree.insert(45);
+    tree.insert(85);
+    tree.insert(99);
     
     tree.rotateRight(tree.root);
     tree.rotateRight(tree.root);
@@ -83,40 +85,8 @@ window.onload = function() {
     tree.rotateLeft(tree.root.right);
     tree.rotateRight(tree.root.right);
     tree.rotateRight(tree.root.right);
-
-    doc.prev.onclick = function () {
-        controller.stepBack();
-    }
-
-    doc.next.onclick = function () {
-        controller.stepForward();
-    }
-
-    doc.run.onclick = function () {
-        controller.toggleRun();
-    }
-
-    doc.progress.oninput = function () {
-        controller.slideProgress();
-    }
-    doc.progress.onmouseup = function () {
-        controller.setProgress();
-    }
-
-    controller.animQueue = tree.animQueue;
-    controller.prev = doc.prev;
-    controller.next = doc.next;
-    controller.run = doc.run;
-    controller.progress = doc.progress;
-
-    controller.progress.min = 0;
-    controller.progress.max = controller.animQueue.length;
-    controller.progress.value = 0;
+    controller = new Controller(tree, doc.run, doc.progress);
 
     controller.animQueue[0].showFirstFrame();
     controller.playQueue(0);
-}
-
-function animInterval() {
-    return Number(doc.speed.max) - Number(doc.speed.value) + Number(doc.speed.min);
 }
