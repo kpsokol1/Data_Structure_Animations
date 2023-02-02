@@ -85,8 +85,6 @@ window.onload = function() {
     tree.rotateLeft(tree.root.right);
     tree.rotateRight(tree.root.right);
     tree.rotateRight(tree.root.right);
+    
     controller = new Controller(tree, doc.run, doc.progress);
-
-    controller.animQueue[0].showFirstFrame();
-    controller.playQueue(0);
 }
