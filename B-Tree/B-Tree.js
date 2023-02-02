@@ -4,6 +4,7 @@ class BTree{
     this.t = t;                                                 //keeps track of the degree of the tree 2-3,2-4,2-5....
     this.root = new Node(t);                                    //reference to root node
     this.maxKeys = 2*t - 1;                                     //the maximum amount of keys a node can have before needing a split
+    this.height = 0;
   }
 
   insert(key){
@@ -16,6 +17,7 @@ class BTree{
       s.childNodes.push(r);                                     //make the old root, s (new root) leftmost child
       s.splitChild(0);                                 //split the old root, which is s's new child
       s.insertNonFull(key);                                    //root was split, now try to insert the key
+      this.height++;
     }
     else{
       r.insertNonFull(key);                                    //the root did not need to be split, try to insert the key
@@ -23,11 +25,11 @@ class BTree{
   }
 
   search(key){
-    return this.root.search(key);
+    return this.root.search(key,0,0);
   }
 
   delete(key){
-    return this.root.delete(key);
+    return this.root.delete(key,0);
   }
 
 }
@@ -109,7 +111,8 @@ class Node {
   }
 
   //search
-  search(key){
+  search(key, level,index){
+    animationQueue.push(Animations.highlight(level,index));
     let i = 0;
     while(i < this.keys.length && key > this.keys[i]){                  //locate roughly where to look (iterate through the keys until we are greater than or equal to the key)
       i++;
@@ -123,7 +126,7 @@ class Node {
       return null;                                                        //return null
     }
     else{
-      return this.childNodes[i].search(key);                              //recurse on the right,child (we were greater than the key)
+      return this.childNodes[i].search(level+1,i);                              //recurse on the right,child (we were greater than the key)
     }
   }
 
@@ -353,115 +356,20 @@ class Node {
 }
 
 let b_tree = new BTree(2);
-//case 1
 b_tree.insert(1);
-b_tree.insert(3);
-b_tree.insert(4);
-b_tree.insert(5);
-b_tree.insert(2);
-b_tree.delete(5);
+ b_tree.insert(2);
+ b_tree.insert(3);
+   b_tree.insert(4);
+  b_tree.insert(5);
+ b_tree.insert(6);
+  b_tree.insert(7);
+  b_tree.insert(8);
+  b_tree.insert(9);
+ b_tree.insert(10);
+ b_tree.insert(11);
+ b_tree.insert(12);
+ b_tree.insert(13);
+ b_tree.insert(14);
+ b_tree.delete(4);
 
-//case 3a:
-b_tree.delete(4);
-
-//case 3b:
-b_tree.insert(4);
-b_tree.delete(2);
-b_tree.delete(1);
-
-//reset
-b_tree.delete(3);
-b_tree.delete(4);
-
-//case 2a
-b_tree.insert(10);
-b_tree.insert(9);
-b_tree.insert(11);
-b_tree.insert(8);
-b_tree.insert(12);
-b_tree.insert(7);
-b_tree.insert(13);
-b_tree.insert(6);
-b_tree.insert(14);
-b_tree.insert(5);
-b_tree.insert(15);
-b_tree.insert(4);
-b_tree.insert(16);
-b_tree.insert(3);
-b_tree.insert(17);
-b_tree.insert(2);
-b_tree.insert(18);
-b_tree.insert(1);
-b_tree.insert(19);
-b_tree.insert(0);
-b_tree.insert(20);
-b_tree.delete(2);
-
-//case 2b
-b_tree.delete(10);
-b_tree.delete(9);
-b_tree.delete(11);
-b_tree.delete(8);
-b_tree.delete(12);
-b_tree.delete(7);
-b_tree.delete(13);
-b_tree.delete(6);
-b_tree.delete(14);
-b_tree.delete(5);
-b_tree.delete(15);
-b_tree.delete(4);
-b_tree.delete(16);
-b_tree.delete(3);
-b_tree.delete(17);
-b_tree.delete(2);
-b_tree.delete(18);
-b_tree.delete(1);
-b_tree.delete(19);
-b_tree.delete(0);
-b_tree.delete(20);
-
-b_tree.insert(10);
-b_tree.insert(9);
-b_tree.insert(11);
-b_tree.insert(8);
-b_tree.insert(12);
-b_tree.insert(7);
-b_tree.insert(13);
-b_tree.insert(6);
-b_tree.insert(14);
-b_tree.insert(5);
-b_tree.insert(15);
-b_tree.insert(4);
-b_tree.insert(16);
-b_tree.insert(3);
-b_tree.insert(17);
-b_tree.insert(2);
-b_tree.insert(18);
-b_tree.insert(1);
-b_tree.insert(19);
-b_tree.insert(0);
-b_tree.insert(20);
-b_tree.delete(18);
-
-console.log(b_tree.search(10));
-console.log(b_tree.search(9));
-console.log(b_tree.search(11));
-console.log(b_tree.search(8));
-console.log(b_tree.search(12));
-console.log(b_tree.search(7));
-console.log(b_tree.search(13));
-console.log(b_tree.search(6));
-console.log(b_tree.search(14));
-console.log(b_tree.search(5));
-console.log(b_tree.search(15));
-console.log(b_tree.search(4));
-console.log(b_tree.search(16));
-console.log(b_tree.search(3));
-console.log(b_tree.search(17));
-console.log(b_tree.search(2));
-console.log(b_tree.search(18));
-console.log(b_tree.search(1));
-console.log(b_tree.search(19));
-console.log(b_tree.search(0));
-console.log(b_tree.search(20));
-b_tree;
+Animations.drawTree(b_tree);
