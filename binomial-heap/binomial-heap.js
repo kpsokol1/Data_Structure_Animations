@@ -15,9 +15,12 @@ function _Node (key) {
  * creates a binomial heap
  * @constructor
  */
-function BinomialHeap () {
+function BinomialHeap (visualizer) {
     this.head = undefined;
     this.nodeCount = 0;
+
+    this.animQueue = [];
+    this.visualizer = visualizer;
 }
 
 /**
@@ -150,6 +153,12 @@ BinomialHeap.prototype.insert = function (key) {
     temp.head = newnode;
     temp.nodeCount++;
     this.union(temp);
+
+    this.visualizer?.fixTree(this.head);
+
+    this.animQueue.push(
+        this.visualizer?.select(this.head, newnode));
+
     return newnode;
 }
 
@@ -257,17 +266,46 @@ function find (head, key) {
     return undefined;
 }
 
+BinomialHeap.prototype.find = function (key) {
+    return this.recursiveFind(this.head, key);
+}
+
+BinomialHeap.prototype.recursiveFind = function (head, key) {
+    while (head) {
+        this.animQueue.push(
+            this.visualizer?.select(this.head, head));
+
+        if (head.key == key) return head;
+
+        if (head.key < key) {
+            var found = this.recursiveFind(head.child, key);
+            if (found) return found;
+        }
+        head = head.sibling;
+    }
+
+    return undefined;
+}
+
 /**
  * searches for key and deletes it if found
  * @param {int} key 
  * @return {boolean} whether the key is actually deleted
  */
 BinomialHeap.prototype.delete = function (key) {
-    var found = find(this.head, key);
+    var found = this.find(key);
     if (!found) return false;
+
+    let select = this.visualizer?.select(this.head, found);
 
     this.decreaseKey(found, Number.NEGATIVE_INFINITY); // makes node have unique minimum key of -inf
     this.extractMin(); // remove it
+
+    this.visualizer?.fixTree(this.head);
+
+    this.animQueue.push(new CompositeAnimation(
+        select, this.visualizer?.render(this.head)
+    ));    
 
     this.nodeCount--;
     return true;
