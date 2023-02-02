@@ -12,6 +12,11 @@ function Controller(tree, runButton, slider) {
     this.curAnim;
     this.running = false;
     this.inputFlag = false;
+
+    if (this.animQueue.length > 0) {
+        this.animQueue[0].showFirstFrame();
+        this.playQueue(0);
+    }
 }
 
 function randInt(min, max) {
@@ -26,14 +31,12 @@ Controller.prototype.execute = function (operation, operand) {
 
     if (num === NaN) return;
 
+    this.curAnim?.abort();
+    let i = this.slider.value = this.animQueue.length;
+
     switch (operation) {
     case 'insert': {
-        this.curAnim?.abort();
-        let i = this.slider.value = this.animQueue.length;
         this.tree.insert(num);
-        this.slider.max = this.animQueue.length;
-        this.playQueue(i);
-        if (!this.running) this.toggleRun();
         break;
     }
     case 'delete':
@@ -43,6 +46,10 @@ Controller.prototype.execute = function (operation, operand) {
         this.tree.find(num);
         break;
     }
+
+    this.slider.max = this.animQueue.length;
+    this.playQueue(i);
+    if (!this.running) this.toggleRun();
 }
 
 Controller.prototype.stepBack = function () {
@@ -135,7 +142,4 @@ Controller.prototype.playQueue = function (i) {
         this.playQueue(++i);
     }, 
     () => {console.log('exited')});
-
-    console.log(this.curAnim);
-    console.log(this.running);
 }

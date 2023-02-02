@@ -23,7 +23,6 @@ let VisualTree = (() => {
 function VisualTree(canvas) {
     this.root = null;
     this.canvas = canvas;
-    this.animQueue = [];
 
     this.canvas.getContext('2d').scale 
     (
@@ -79,28 +78,28 @@ VisualTree.prototype.cloneNode = function (node) {
     }
 };
 
-const NODE_RADIUS = 20;
+VisualTree.prototype.NODE_RADIUS = 20;
 
 /**Draw the individual node */
 VisualTree.prototype.drawNode = function (node) {
     let ctx = this.canvas.getContext('2d');
 
     ctx.beginPath();
-    ctx.arc(node.x, node.y, NODE_RADIUS, 0, Math.PI * 2, true);
+    ctx.arc(node.x, node.y, this.NODE_RADIUS, 0, Math.PI * 2, true);
     ctx.fillStyle = node.color;
     ctx.fill();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'black'
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(node.x, node.y, NODE_RADIUS/2, 0, Math.PI * 2, true);
+    ctx.arc(node.x, node.y, this.NODE_RADIUS * 0.6, 0, Math.PI * 2, true);
     ctx.fillStyle = 'white';
     ctx.fill();
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(node.key, node.x, node.y, 40);
+    ctx.fillText(node.key, node.x, node.y, this.NODE_RADIUS * 0.8);
 };
 
 /**Draw a highlighted outline around the node */
@@ -109,7 +108,7 @@ VisualTree.prototype.drawCursor = function (x, y, weight) {
     ctx.beginPath();
     ctx.strokeStyle = 'cyan';
     ctx.lineWidth = 1 * weight;
-    ctx.arc(x, y, 20, 0, Math.PI * 2, true);
+    ctx.arc(x, y, this.NODE_RADIUS, 0, Math.PI * 2, true);
     ctx.stroke();
 };
 
@@ -351,13 +350,13 @@ VisualTree.prototype.updatePositions = function (tree) {
     return new _Animation(Timing.linear, draw, animInterval);
 }
 
-/**
- * Draw the entire tree.
- * 
- * Prefer "let root = this.root.cloneTree(); root.drawTree(this.canvas);" for animations.
- */
-VisualTree.prototype.render = function () {
-    this.drawTree(this.root);
+VisualTree.prototype.render = function (tree) {
+    let root = this.cloneTree(tree);
+
+    return new _Animation(Timing.linear, () => {
+        this.clearCanvas();
+        this.drawTree(root);
+    }, animInterval);
 }
 
 /**

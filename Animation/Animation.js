@@ -187,6 +187,8 @@ _Animation.prototype.reset = function () {
             } else {
                 resolve();      // Resolve the promise.
                 this.after();
+                this.pause();
+                this.reset();
             }
         }
 
