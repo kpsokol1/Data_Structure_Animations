@@ -4,8 +4,13 @@
         <title>Testing Binomial Heap</title>
     </head>
     <body>
-        <input id="input" type="number"/>
-        <input type="submit" value="Insert" onclick="insertKey(document.getElementById('input').value)"/>
+        <input id="insert" type="number"/>
+        <input type="submit" value="Insert" onclick="insertKey(document.getElementById('insert').value)"/>
+        <input id="delete" type="number"/>
+        <input type="submit" value="Delete" onclick="deleteKey(document.getElementById('delete').value)"/>
+        <input id="find" type="number"/>
+        <input type="submit" value="Find" onclick="findKey(document.getElementById('find').value)"/>
+        
         <script src="binomial-heap.js"></script>
     </body>
 </html>

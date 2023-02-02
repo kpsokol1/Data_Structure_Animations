@@ -21,6 +21,10 @@ class Timing {
     }
 }
 
+function animInterval() {
+    return Number(doc.speed.max) - Number(doc.speed.value) + Number(doc.speed.min);
+}
+
 function CompositeAnimation(...animations) {
     this.sequence = animations;
     this.finished = Promise.resolve();
@@ -34,17 +38,13 @@ function CompositeAnimation(...animations) {
 Object.assign(CompositeAnimation.prototype, _Animation.prototype);
 
 CompositeAnimation.prototype.play = function () {
-    if (this.paused) {
-        this.paused = false;
-        this.sequence[this.current].play();
-    }
+    this.paused = false;
+    this.sequence[this.current].play();
 }
 
 CompositeAnimation.prototype.pause = function () {
-    if (!this.paused) {
-        this.paused = true;
-        this.sequence[this.current].pause();
-    }
+    this.paused = true;
+    this.sequence[this.current].pause();
 }
 
 CompositeAnimation.prototype.showFirstFrame = function () {
@@ -57,12 +57,11 @@ CompositeAnimation.prototype.showLastFrame = function () {
 
 CompositeAnimation.prototype.abort = function () {
     this.sequence[this.current].abort();
-    this.pause();
+    //this.pause();
     this.reset();
 }
 
 CompositeAnimation.prototype.reset = function () {
-    this.sequence.forEach(anim => anim.reset());
     this.current = 0;
 
     this.finished = new Promise((resolve, reject) => {
@@ -70,6 +69,7 @@ CompositeAnimation.prototype.reset = function () {
             if (!this.paused) this.sequence[this.current].play();
             this.sequence[this.current].finished.then(() => {
                 this.sequence[this.current].pause();
+                this.sequence[this.current].reset();
                 if (++this.current >= this.sequence.length) {
                     resolve();
                     this.paused = true;
