@@ -31,7 +31,6 @@ class BTree{
   delete(key){
     return this.root.delete(key,0);
   }
-
 }
 
 
@@ -112,13 +111,15 @@ class Node {
 
   //search
   search(key, level,index){
-    animationQueue.push(Animations.highlight(level,index));
+    let tempNode = this;
+    animationQueue.push(function() {Animations.highlight(tempNode,level,index,"red", false,key)});
     let i = 0;
     while(i < this.keys.length && key > this.keys[i]){                  //locate roughly where to look (iterate through the keys until we are greater than or equal to the key)
       i++;
     }
 
     if(i < this.keys.length && key === this.keys[i]){                     //we found the key
+      animationQueue.push(function() {Animations.highlight(tempNode,level,index,"green", true,key)});
       return "found";                                                    //return the node the key was found out and the index of the key in the node  //fixme may need to change this later
     }
 
@@ -126,7 +127,7 @@ class Node {
       return null;                                                        //return null
     }
     else{
-      return this.childNodes[i].search(level+1,i);                              //recurse on the right,child (we were greater than the key)
+      return this.childNodes[i].search(key,level+1,i);                              //recurse on the right,child (we were greater than the key)
     }
   }
 
@@ -357,19 +358,25 @@ class Node {
 
 let b_tree = new BTree(2);
 b_tree.insert(1);
- b_tree.insert(2);
- b_tree.insert(3);
-   b_tree.insert(4);
-  b_tree.insert(5);
- b_tree.insert(6);
-  b_tree.insert(7);
-  b_tree.insert(8);
+  b_tree.insert(2);
+  b_tree.insert(3);
+  b_tree.insert(4);
+   b_tree.insert(5);
+  b_tree.insert(6);
+   b_tree.insert(7);
+   b_tree.insert(8);
   b_tree.insert(9);
- b_tree.insert(10);
- b_tree.insert(11);
- b_tree.insert(12);
- b_tree.insert(13);
- b_tree.insert(14);
- b_tree.delete(4);
+  b_tree.insert(10);
+  b_tree.insert(11);
+  b_tree.insert(12);
+  b_tree.insert(13);
+  b_tree.insert(14);
+  b_tree.delete(4);
 
 Animations.drawTree(b_tree);
+b_tree.search(7);
+Animations.runQueue(b_tree,1500);
+//b_tree.search(2);
+//Animations.runQueue(b_tree,1500);
+//Animations.clearTree();
+//Animations.drawTree(b_tree);
