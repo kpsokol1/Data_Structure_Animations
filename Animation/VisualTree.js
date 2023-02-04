@@ -23,11 +23,12 @@ let VisualTree = (() => {
 function VisualTree(canvas) {
     this.root = null;
     this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
 
-    this.canvas.getContext('2d').scale 
+    this.ctx.scale 
     (
-        this.canvas.width / SCREEN_WIDTH,
-        this.canvas.height / SCREEN_HEIGHT
+        this.canvas.width / this.SCREEN_WIDTH,
+        this.canvas.height / this.SCREEN_HEIGHT
     );
 }
 
@@ -82,68 +83,72 @@ VisualTree.prototype.NODE_RADIUS = 20;
 
 /**Draw the individual node */
 VisualTree.prototype.drawNode = function (node) {
-    let ctx = this.canvas.getContext('2d');
+    let x = node.x + (node.offsetX ? node.offsetX : 0);
+    let y = node.y + (node.offsetY ? node.offsetY : 0);
 
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, this.NODE_RADIUS, 0, Math.PI * 2, true);
-    ctx.fillStyle = node.color;
-    ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'black'
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, this.NODE_RADIUS * 0.6, 0, Math.PI * 2, true);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-    ctx.fillStyle = 'black';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(node.key, node.x, node.y, this.NODE_RADIUS * 0.8);
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, this.NODE_RADIUS, 0, Math.PI * 2, true);
+    this.ctx.fillStyle = node.color;
+    this.ctx.fill();
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = 'black'
+    this.ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, this.NODE_RADIUS * 0.6, 0, Math.PI * 2, true);
+    this.ctx.fillStyle = 'white';
+    this.ctx.fill();
+    this.ctx.fillStyle = 'black';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.font = 'bold 12px sans-serif';
+
+    let text = node.key;
+    if (text === Number.NEGATIVE_INFINITY)
+        text = '-Inf';
+    this.ctx.fillText(text, x, y, this.NODE_RADIUS * 0.8);
 };
 
 /**Draw a highlighted outline around the node */
 VisualTree.prototype.drawCursor = function (x, y, weight) {
-    let ctx = this.canvas.getContext('2d');
-    ctx.beginPath();
-    ctx.strokeStyle = 'cyan';
-    ctx.lineWidth = 1 * weight;
-    ctx.arc(x, y, this.NODE_RADIUS, 0, Math.PI * 2, true);
-    ctx.stroke();
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = 'cyan';
+    this.ctx.lineWidth = 1 * weight;
+    this.ctx.arc(x, y, this.NODE_RADIUS, 0, Math.PI * 2, true);
+    this.ctx.stroke();
 };
 
 /**Draw the node and all of its children */
 VisualTree.prototype.drawTree = function (root) {
-    let ctx = this.canvas.getContext('2d');
-
     if (root.left) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.moveTo(root.x, root.y);
-        ctx.lineTo(root.left.x, root.left.y);
-        ctx.stroke();
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = 'black';
+        this.ctx.beginPath();
+        this.ctx.moveTo(root.x, root.y);
+        this.ctx.lineTo(root.left.x, root.left.y);
+        this.ctx.stroke();
         this.drawTree(root.left);
     }
     if (root.right) {
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
-        ctx.beginPath();
-        ctx.moveTo(root.x, root.y);
-        ctx.lineTo(root.right.x, root.right.y);
-        ctx.stroke();
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = 'black';
+        this.ctx.beginPath();
+        this.ctx.moveTo(root.x, root.y);
+        this.ctx.lineTo(root.right.x, root.right.y);
+        this.ctx.stroke();
         this.drawTree(root.right);
     }
     this.drawNode(root);
 };
 
-const MARGIN_TOP = 30;
-const MARGIN_LEFT = 50;
-const MAX_ROWS = 8;
-const SCREEN_HEIGHT = 500;
-const SCREEN_WIDTH = 1000;
-const DIFF_Y = SCREEN_HEIGHT / MAX_ROWS;
-const DIFF_X = SCREEN_WIDTH - MARGIN_LEFT * 2;
+VisualTree.prototype.MARGIN_TOP = 30;
+VisualTree.prototype.MARGIN_LEFT = 50;
+VisualTree.prototype.MAX_ROWS = 8;
+VisualTree.prototype.SCREEN_HEIGHT = 500;
+VisualTree.prototype.SCREEN_WIDTH = 1000;
+VisualTree.prototype.DIFF_Y = 
+    VisualTree.prototype.SCREEN_HEIGHT / VisualTree.prototype.MAX_ROWS;
+VisualTree.prototype.DIFF_X = 
+    VisualTree.prototype.SCREEN_WIDTH - VisualTree.prototype.MARGIN_LEFT * 2;
 
 /**
  * Calculates the coordinate position of the node in question
@@ -159,14 +164,13 @@ VisualTree.prototype.getPos = function (index) {
     let offset = index - ((2 ** depth) - 1) + 1;
 
     return {
-        x: DIFF_X / ((2 ** depth) + 1) * offset + MARGIN_LEFT,
-        y: DIFF_Y * depth + MARGIN_TOP,
+        x: this.DIFF_X / ((2 ** depth) + 1) * offset + this.MARGIN_LEFT,
+        y: this.DIFF_Y * depth + this.MARGIN_TOP,
     }
 }
 
 VisualTree.prototype.clearCanvas = function () {
-    let ctx = this.canvas.getContext('2d');
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 }
 
 /**
@@ -231,26 +235,27 @@ VisualTree.prototype.binaryInsert = function (tree, node) {
  * @returns {_Animation} An animation that highlights each node.
  */
 VisualTree.prototype.select = function(tree, ...nodes) {
-    let root = tree ? this.cloneTree(tree) : this.cloneNode(nodes[0]);
+    let root = this.cloneTree(tree);
 
     nodes = nodes.map(node => this.cloneNode(node));
 
-    let before = () => {}
-
     let draw = (progress) => {
         this.clearCanvas();
-        this.drawTree(root);
+        if (root) this.drawTree(root);
         // highlight the nodes
-        let weight = 3 + 2 * Math.sin(progress * 6 * Math.PI);
-        nodes.forEach(node => this.drawCursor(node.x, node.y, weight));
+        let weight = 3 + 2 * Math.sin(progress * 2 * Math.PI);
+        nodes.forEach(node => {
+            this.drawNode(node);
+            this.drawCursor(node.x, node.y, weight)
+        });
     }
 
-    let after = () => {}
+    let duration = () => { return animInterval() / 3; };
 
-    return new _Animation(Timing.linear, draw, animInterval, before, after);
+    return new _Animation(Timing.linear, draw, duration);
 }
 
-VisualTree.prototype.moveCursor = function(tree, nodeA, nodeB) {
+VisualTree.prototype.moveCursor = function (tree, nodeA, nodeB) {
     let root = this.cloneTree(tree);
 
     let a = nodeA ? this.cloneNode(nodeA) : this.cloneNode(nodeB);
@@ -273,6 +278,38 @@ VisualTree.prototype.moveCursor = function(tree, nodeA, nodeB) {
     let move = new _Animation(Timing.linear, draw, duration);
 
     return new CompositeAnimation(select, move);
+}
+
+VisualTree.prototype.swap = function (tree, nodeA, nodeB) {
+   let nodeList = this.flatten(tree);
+   let i, j;
+
+
+   for (let k = 0; k < nodeList.length; ++k) {
+        if (Object.id(nodeList[k]) == Object.id(nodeA)) i = k;
+        if (Object.id(nodeList[k]) == Object.id(nodeB)) j = k;
+   }
+
+   nodeList = this.flatten(this.cloneTree(tree));
+
+   let ax = nodeA.x;
+   let ay = nodeA.y;
+   let bx = nodeB.x;
+   let by = nodeB.y;
+
+   let draw = (progress) => {
+        nodeList[i].offsetX = (bx - ax) * progress;
+        nodeList[i].offsetY = (by - ay) * progress;
+        nodeList[j].offsetX = (ax - bx) * progress;
+        nodeList[j].offsetY = (ay - by) * progress;
+
+        this.clearCanvas();
+        this.drawTree(nodeList[0]);
+        this.drawNode(nodeList[i]);
+        this.drawNode(nodeList[j]);
+   }
+
+   return new _Animation(Timing.linear, draw, animInterval);
 }
 
 /**
@@ -303,12 +340,12 @@ function reIndex(node) {
  * @param {VisualNode} node - The root of the subtree to flatten.
  * @returns {VisualNode[]} An array of nodes.
  */
-function flatten (node) {
-    if (!node) return [];
+VisualTree.prototype.flatten = function (tree) {
+    if (!tree) return [];
 
-    let nodes = [node];
-    nodes = nodes.concat(flatten(node.left));
-    nodes = nodes.concat(flatten(node.right));
+    let nodes = [tree];
+    nodes = nodes.concat(this.flatten(tree.left));
+    nodes = nodes.concat(this.flatten(tree.right));
     return nodes;
 }
 
@@ -322,7 +359,7 @@ VisualTree.prototype.updatePositions = function (tree) {
     reIndex(tree);
 
     let root = this.cloneTree(tree);
-    let nodes = flatten(root);
+    let nodes = this.flatten(root);
 
     let update = (node) => {
         if (!node) return;
@@ -365,7 +402,7 @@ VisualTree.prototype.render = function (tree) {
  * @TODO Actually print useful information.
  */
 VisualTree.prototype.print = function () {
-    let nodes = flatten(this.root);
+    let nodes = this.flatten(this.root);
     for (let node of nodes) {
         console.log(node.key, node.index);
     }

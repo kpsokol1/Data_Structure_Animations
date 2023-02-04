@@ -36,8 +36,6 @@ window.onload = function() {
         heap.insert(i);
     }
 
-    vHeap.drawTree(heap.head);
-
     controller = new Controller(heap, doc.run, doc.progress);
 
     controller.prev = doc.prev;

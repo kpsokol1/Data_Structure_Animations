@@ -25,6 +25,11 @@ function animInterval() {
     return Number(doc.speed.max) - Number(doc.speed.value) + Number(doc.speed.min);
 }
 
+function timeByDistance(x0, y0, x1, y1, factor = 200) {
+    let d = Math.sqrt((x1 - x0)**2 + (y1 - y0)**2);
+    return (() => { return animInterval() * d / factor; });
+}
+
 function CompositeAnimation(...animations) {
     this.sequence = animations;
     this.finished = Promise.resolve();
@@ -57,12 +62,11 @@ CompositeAnimation.prototype.showLastFrame = function () {
 
 CompositeAnimation.prototype.abort = function () {
     this.sequence[this.current].abort();
-    //this.pause();
-    this.reset();
 }
 
 CompositeAnimation.prototype.reset = function () {
     this.current = 0;
+    this.sequence.forEach(anim => anim.reset());
 
     this.finished = new Promise((resolve, reject) => {
         let playNext = () => {
@@ -71,9 +75,8 @@ CompositeAnimation.prototype.reset = function () {
                 this.sequence[this.current].pause();
                 this.sequence[this.current].reset();
                 if (++this.current >= this.sequence.length) {
+                    this.current = 0;
                     resolve();
-                    this.paused = true;
-                    this.reset();
                 } else
                     playNext();
             }, reject);
@@ -93,6 +96,7 @@ CompositeAnimation.prototype.reset = function () {
  * @param {function} after - Draw function to be called after the last frame.
  * @returns {_Animation}
  */
+
 function _Animation(timing, draw, duration, before = ()=>{}, after = ()=>{}) {
     this.timing = timing;
     this.draw = draw;
@@ -148,8 +152,6 @@ _Animation.prototype.showLastFrame = function () {
  */
 _Animation.prototype.abort = function () {
     this.exitLoop();
-    this.pause();
-    this.reset();
 }
 
 /**
@@ -187,8 +189,6 @@ _Animation.prototype.reset = function () {
             } else {
                 resolve();      // Resolve the promise.
                 this.after();
-                this.pause();
-                this.reset();
             }
         }
 

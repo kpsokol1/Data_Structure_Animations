@@ -31,7 +31,7 @@ Controller.prototype.execute = function (operation, operand) {
 
     if (num === NaN) return;
 
-    this.curAnim?.abort();
+    if (this.running) this.toggleRun();
     let i = this.slider.value = this.animQueue.length;
 
     switch (operation) {
@@ -54,16 +54,15 @@ Controller.prototype.execute = function (operation, operand) {
 
 Controller.prototype.stepBack = function () {
     let i = this.slider.value;
-    
-    this.curAnim?.finished.catch(() => {
-        //console.log('exited')
-    });
-    this.curAnim?.abort();
 
     if (this.running) this.toggleRun();
 
-    this.playQueue(--i);
-    this.curAnim?.showFirstFrame();
+    this.curAnim?.abort();
+
+    this.queueFinish.then(() => {
+        this.playQueue(--i);
+        this.curAnim?.showFirstFrame();
+    });
 }
 
 Controller.prototype.stepForward = function () {
@@ -71,8 +70,12 @@ Controller.prototype.stepForward = function () {
 
     if (this.running) this.toggleRun();
 
-    this.playQueue(++i);
-    this.curAnim?.showFirstFrame();
+    this.curAnim?.abort();
+
+    this.queueFinish.then(() => {
+        this.playQueue(++i);
+        this.curAnim?.showFirstFrame();
+    });
 }
 
 Controller.prototype.toggleRun = function () {
@@ -122,6 +125,7 @@ Controller.prototype.setSlider = function () {
  * @returns {undefined}
  */
 Controller.prototype.playQueue = function (i) {
+this.queueFinish = new Promise((resolve) => {
     this.slider.value = i;
 
     if (i < 0) i = 0;
@@ -131,6 +135,7 @@ Controller.prototype.playQueue = function (i) {
         if (this.running) {
             this.toggleRun();
         }
+        resolve();
         return;
     }
 
@@ -139,7 +144,15 @@ Controller.prototype.playQueue = function (i) {
     if (this.running) this.animQueue[i].play();
 
     this.animQueue[i].finished.then(() => {
+        this.curAnim?.pause();
+        this.curAnim?.reset();
         this.playQueue(++i);
     }, 
-    () => {console.log('exited')});
+    () => {
+        console.log('exited');
+        this.curAnim?.pause();
+        this.curAnim?.reset();
+        resolve();
+    });
+});
 }
