@@ -24,7 +24,6 @@ class Doc {
 
 var doc = new Doc;
 var running = false;
-var curAnim;
 var controller;
 
 window.onload = function() {
@@ -37,8 +36,7 @@ window.onload = function() {
     doc.addElement('operation');
     doc.addElement('operand');
 
-    let vTree = new VisualTree(doc.canvas);
-    let tree = new BinaryTree(vTree);
+    let tree = new BinaryTree(doc.canvas);
    
     tree.insert(50);
     tree.insert(30);

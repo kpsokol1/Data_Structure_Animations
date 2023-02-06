@@ -9,18 +9,20 @@ function _Node (key) {
     this.parent = undefined;
     this.child = undefined;
     this.sibling = undefined;
+
+    this.type = 'Binomial';
 }
 
 /**
  * creates a binomial heap
  * @constructor
  */
-function BinomialHeap (visualizer) {
+function BinomialHeap (canvas) {
     this.head = undefined;
     this.nodeCount = 0;
 
     this.animQueue = [];
-    this.visualizer = visualizer;
+    this.canvas = canvas;
 }
 
 /**

@@ -19,3 +19,182 @@
         return o.__uniqueid;
     };
 })();
+
+var Visual = {};
+
+function clearCanvas (canvas) {
+    let ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawCursor (x, y, weight, radius, canvas) {
+    console.log(x, y, weight, radius, canvas);
+
+    let ctx = canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'cyan';
+    ctx.lineWidth = 1 * weight;
+    ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+    ctx.stroke();
+}
+
+function drawTree (node, size, canvas) {
+    let ctx = canvas.getContext('2d');
+
+    switch (node.type) 
+    {
+    case 'Binomial': {
+        let drawSubTree = (tree) => {
+            if (!tree) return;
+    
+            for (let cur = tree.child; cur; cur = cur.sibling) {
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'black';
+                ctx.beginPath();
+                ctx.moveTo(tree.x, tree.y);
+                ctx.lineTo(cur.x, cur.y);
+                ctx.stroke();
+                drawSubTree(cur);
+            }
+        
+            drawNode(tree, size, canvas);
+        }
+
+        for (let cur = node; cur; cur = cur.sibling) {
+            drawSubTree(cur);
+        }
+    }   break;
+
+    case 'Binary':
+    default:
+        if (node.left) {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(node.left.x, node.left.y);
+            ctx.stroke();
+            drawTree(node.left, size, canvas);
+        }
+        if (node.right) {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'black';
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(node.right.x, node.right.y);
+            ctx.stroke();
+            drawTree(node.right, size, canvas);
+        }
+        drawNode(node, size, canvas);
+    }
+}
+
+function cloneNode (node) {
+    if (!node) return null;
+
+    switch (node.type) {
+    case 'Binomial':
+        return {
+            key: node.key,
+            degree: node.degree,
+            x: node.x,
+            y: node.y,
+            type: 'Binomial'
+        };
+
+    case 'Binary':
+    default:
+        return {
+            key: node.key,
+            color: node.color,
+            index: node.index,
+            x: node.x,
+            y: node.y,
+            type: 'Binary'
+        };
+    }
+}
+
+function cloneTree (node) {
+    if (!node) return null;
+
+    switch (node.type) {
+    case 'Binomial': {
+        let _root = cloneNode(root);
+    
+        _root.child = cloneTree(root.child);
+        if (_root.child) {
+            _root.child.parent = _root;
+        }
+    
+        _root.sibling = cloneTree(root.sibling);
+    
+        return _root;
+    }
+
+    case 'Binary':
+    default: {
+        let _root = cloneNode(node);
+    
+        if (node.left)  {
+            _root.left = cloneTree(node.left);
+            _root.left.parent = _root;
+        }
+        if (node.right) {
+            _root.right = cloneTree(node.right);
+            _root.right.parent = _root;
+        }
+        return _root;
+    }
+    }
+}
+
+function flattenTree (tree) {
+    if (!tree) return [];
+
+    switch (tree.type) {
+    case 'Binomial': {
+        let nodes = [tree];
+        nodes = nodes.concat(flattenTree(tree.child));
+        nodes = nodes.concat(flattenTree(tree.sibling));
+        return nodes;
+    }
+
+    case 'Binary':
+    default: {
+        let nodes = [tree];
+        nodes = nodes.concat(flattenTree(tree.left));
+        nodes = nodes.concat(flattenTree(tree.right));
+        return nodes;
+    }
+    }
+}
+
+function drawNode (node, size, canvas) {
+    let x = node.x + (node.offsetX ? node.offsetX : 0);
+    let y = node.y + (node.offsetY ? node.offsetY : 0);
+
+    let ctx = canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2, true);
+    ctx.fillStyle = node.color;
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'black'
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.6, 0, Math.PI * 2, true);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 12px sans-serif';
+
+    let text = node.key;
+    if (text === Number.NEGATIVE_INFINITY)
+        text = '-Inf';
+    ctx.fillText(text, x, y, size * 0.8);
+}
