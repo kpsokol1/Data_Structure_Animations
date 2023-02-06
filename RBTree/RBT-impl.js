@@ -131,6 +131,15 @@ class RBTree {
         this.size = 0;
         this.leaf = new RBTNode(null, null);
     }
+    get(key) {
+        let node = this.root;
+        while (node != null) {
+            if (key < node.key) node = node.left;
+            else if (key > node.key) node = node.right;
+            else return node;
+        }
+        return null;
+    }
     insert(key, value) {
         let node = new RBTNode(key, value);
         node.linkLeft(this.leaf);
@@ -201,6 +210,7 @@ class RBTree {
             }
         }
         newNode.parent = oldNode.parent;
+
     }
     rotateLeft(node) {
         let right = node.right;
@@ -345,7 +355,7 @@ class RBTVisualize {
     constructor() {
         this.tree = new RBTree();
         this.nodes = [];
-        this.edges = [];
+        this.edges = {};
         this.element = document.createElement("div");
         this.element.style.position = "absolute";
         this.element.style.width = "100%";
@@ -364,7 +374,7 @@ class RBTVisualize {
             return;
         }
         let node = this.tree.insert(key, value);
-        this.nodes.push(node);
+        this.nodes.push(node.key);
         this.update();
     }
     delete(key) {
@@ -378,7 +388,9 @@ class RBTVisualize {
         this.update();
     }
     update() {
-        for (let node of this.nodes) {
+        for (let key of this.nodes) {
+            let node = this.tree.get(key);
+            if (node == null) continue;
             if (this.elements[node.key] == null) {
                 this.elements[node.key] = document.createElement("div");
 
@@ -392,28 +404,79 @@ class RBTVisualize {
             element.style.backgroundColor = node.isRed() ? "red" : "black";
             element.style.borderRadius = "50%";
             element.style.zIndex = "1";
-            element.style.top = (node.getLevel() * height + 5) + "px";
-            element.style.left = (node.getRank() * width + 5) + "px";
-            element.innerText = node.key;
+            let y = (node.getLevel() * height + 5)
+            let x = (node.getRank() * width + 5)
+            element.style.top = y + "px";
+            element.style.left = x + "px";
+            element.innerText = node.key;// +"\n"+ node.parent?.key;
             element.style.color = "white";
             element.style.fontSize = "20px";
             element.style.textAlign = "center";
+            //element.align = "center";
+            //element.verticalAlign = "middle";
+            element.style.marginLeft = -width / 2;
+            element.style.marginTop = -height / 2;
             this.element.appendChild(element);
-            //add a label to it
-            /*let label = document.createElement("div");
-            label.style.position = "relative";
-            label.style.zIndex = "3";
-            label.style.top = (node.getLevel() * 2 * height) + "px";
-            label.style.left = (node.getRank() * 2 * width) + "px";
-            
-            label.style.color = "white";
-            label.style.fontSize = "120px";
-            label.style.textAlign = "left";
-            label.innerHTML = ""
-            label.innerHTML+=node.getLevel()+"\n";
-            label.innerHTML+=node.getRank()+"\n";
-            element.appendChild(label);*/
 
+
+        }
+        for (let key of this.nodes) {
+            let node = this.tree.get(key);
+            let width = 30;
+            let height = 30;
+            let y = (node.getLevel() * height + 5)
+            let x = (node.getRank() * width + 5)
+            let element = this.elements[node.key];
+            //add edges
+            if (node.parent == null) {
+                if (this.edges[node.key] != null) {
+                    this.element.removeChild(this.edges[node.key]);
+                    this.edges[node.key] = null;
+                }
+            }
+            else {
+                if (this.edges[node.key] == null) {
+                    this.edges[node.key] = document.createElement("div");
+                }
+                let edge = this.edges[node.key];
+                let parent = this.elements[node.parent.key];
+                let getParentElem = (node) => {
+                    if (node.parent == null) return null;
+                    return this.elements[node.parent.key];
+                }
+                let parentX = parseFloat(parent.style.left);
+                let parentY = parseFloat(parent.style.top);
+                let x1 = x;
+                let y1 = y;
+                let x2 = parentX;
+                let y2 = parentY;
+                let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                let angle = Math.atan2(y2 - y1, x2 - x1);
+                //if (x1>x2|true){angle=Math.atan2(y2 - y1, x2 - x1);}
+                //else {angle=Math.atan2(y1 - y2, x1 - x2);}
+                let degree = angle * 180 / Math.PI;
+                //format the degree number to have only 2 digits after the decimal point
+                //element.innerText += "\n" + degree.toFixed(2);
+                //element.innerText += "\n" + x2 + "," + y2;
+                //element.innerText += "\n" + x1 + "," + y1;
+                //element.innerText += "\n" + parent.style.left + "," + parent.style.top;
+                /*let parent2 = getParentElem(node);
+                if (parent2 != null) {
+                    element.innerText += "\n" + parent2.style.left + "," + parent2.style.top;
+                }*/
+                edge.style.position = "absolute";
+                edge.style.width = length + "px";
+                edge.style.height = "2px";
+                edge.style.backgroundColor = "black";
+                edge.style.zIndex = "0";
+                edge.align = "center";
+                edge.style.marginLeft = -length / 2 + "px";
+                edge.style.marginTop = "-1px";
+                edge.style.transform = "rotate(" + angle + "rad)";
+                edge.style.top = (y1 / 2 + y2 / 2) + "px";
+                edge.style.left = (x1 / 2 + x2 / 2) + "px";
+                this.element.appendChild(edge);
+            }
         }
     }
 }

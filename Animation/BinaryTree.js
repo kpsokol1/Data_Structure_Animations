@@ -1,15 +1,17 @@
-function BinaryTree(visualizer) {
+function BinaryTree(ctx) {
     this.root = null;
-    this.visualizer = visualizer;
+    this.ctx = ctx;
     this.animQueue = [];
 }
 
 BinaryTree.prototype.insert = function (key) {
-    let node = {key: key};
+    let node = {key: key, type: 'Binary'};
 
     if (!this.root) {
+
         this.animQueue.push
-        (this.visualizer.binaryInsert(this.root, node));
+        (Visual.Tree.Binary(this.ctx).insert(this.root, node));
+
         this.root = node;
         return;
     }
@@ -21,10 +23,10 @@ BinaryTree.prototype.insert = function (key) {
         if (key < cur.key) {
             if (cur.left) {
                 this.animQueue.push
-                (this.visualizer.moveCursor(this.root, cur, cur.left));
+                (Visual.Tree.Binary(this.ctx).moveCursor(this.root, cur, cur.left));
             } else {
                 this.animQueue.push
-                (this.visualizer.binaryInsert(this.root, node));
+                (Visual.Tree.Binary(this.ctx).insert(this.root, node));
                 cur.left = node;
                 break;
             }
@@ -32,10 +34,10 @@ BinaryTree.prototype.insert = function (key) {
         } else {
             if (cur.right) {
                 this.animQueue.push
-                (this.visualizer.moveCursor(this.root, cur, cur.right));
+                (Visual.Tree.Binary(this.ctx).moveCursor(this.root, cur, cur.right));
             } else {
                 this.animQueue.push
-                (this.visualizer.binaryInsert(this.root, node));
+                (Visual.Tree.Binary(this.ctx).insert(this.root, node));
                 cur.right = node;
                 break;
             }
@@ -45,7 +47,7 @@ BinaryTree.prototype.insert = function (key) {
 }
 
 BinaryTree.prototype.rotateRight = function (pivot) {
-    let initial = this.visualizer.select(this.root, pivot);
+    let initial = Visual.Tree.Binary(this.ctx).select(this.root, pivot);
 
     let left = pivot.left;
 
@@ -65,13 +67,13 @@ BinaryTree.prototype.rotateRight = function (pivot) {
     left.right = pivot;
     pivot.parent = left;
 
-    let rotate = this.visualizer.updatePositions(this.root);
+    let rotate = Visual.Tree.Binary(this.ctx).updatePositions(this.root);
 
     this.animQueue.push(new CompositeAnimation(initial, rotate));
 }
 
 BinaryTree.prototype.rotateLeft = function (pivot) {
-    let initial = this.visualizer.select(this.root, pivot);
+    let initial = Visual.Tree.Binary(this.ctx).select(this.root, pivot);
 
     let right = pivot.right;
 
@@ -91,7 +93,7 @@ BinaryTree.prototype.rotateLeft = function (pivot) {
     right.left = pivot;
     pivot.parent = right;
 
-    let rotate = this.visualizer.updatePositions(this.root);
+    let rotate = Visual.Tree.Binary(this.ctx).updatePositions(this.root);
 
     this.animQueue.push(new CompositeAnimation(initial, rotate));
 }

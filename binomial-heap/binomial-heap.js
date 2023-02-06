@@ -9,15 +9,20 @@ function _Node (key) {
     this.parent = undefined;
     this.child = undefined;
     this.sibling = undefined;
+
+    this.type = 'Binomial';
 }
 
 /**
  * creates a binomial heap
  * @constructor
  */
-function BinomialHeap () {
+function BinomialHeap (ctx) {
     this.head = undefined;
     this.nodeCount = 0;
+
+    this.animQueue = [];
+    this.ctx = ctx;
 }
 
 /**
@@ -41,7 +46,7 @@ BinomialHeap.prototype.size = function () {
  * @param {_Node} b head of second heap to merge
  * @return {Node} head of the merged heap
  */
-function mergeHeaps (a, b) {
+BinomialHeap.prototype.mergeHeaps = function (a, b) {
     if (typeof a.head === 'undefined') return b.head;
     if (typeof b.head === 'undefined') return a.head;
 
@@ -53,6 +58,11 @@ function mergeHeaps (a, b) {
         head = a.head;
         an = an.sibling;
     } else {
+        if (an.x < bn.x) {
+            this.animQueue.push(
+                Visual.Tree.Binomial(this.ctx).mergeLeft(a.head, a.head, b.head)
+            );
+        }
         head = b.head;
         bn = bn.sibling;
     }
@@ -64,6 +74,12 @@ function mergeHeaps (a, b) {
             tail.sibling = an;
             an = an.sibling;
         } else {
+            if (an.x < bn.x) {
+                this.animQueue.push(
+                    Visual.Tree.Binomial(this.ctx).mergeLeft(head, an, bn)
+                );
+            }
+
             tail.sibling = bn;
             bn = bn.sibling;
         }
@@ -81,11 +97,17 @@ function mergeHeaps (a, b) {
  * @param {_Node} tree 
  * @param {_Node} other 
  */
-function linkTrees (tree, other) {
+BinomialHeap.prototype.linkTrees = function (tree, other) {
+    Visual.Tree.Binomial(this.ctx).fixSubTree(other);
+    Visual.Tree.Binomial(this.ctx).fixSubTree(tree);
+
+    tree.degree++;
+    this.animQueue.push(
+        Visual.Tree.Binomial(this.ctx).link(this.head, tree, other));
+
     other.parent = tree;
     other.sibling = tree.child;
     tree.child = other;
-    tree.degree++;
 }
 
 /**
@@ -95,8 +117,8 @@ function linkTrees (tree, other) {
  * @return {int} -1 (a < b), 0 (a == b), 1 (a > b)
  */
 BinomialHeap.prototype.compare = function (a, b) {
-    if (a.key > b.key) return 1;
-    if (a.key < b.key) return -1;
+    if (parseFloat(a.key) > parseFloat(b.key)) return 1;
+    if (parseFloat(a.key) < parseFloat(b.key)) return -1;
     return 0;
 }
 
@@ -106,9 +128,9 @@ BinomialHeap.prototype.compare = function (a, b) {
  */
 BinomialHeap.prototype.union = function (heap) {
     this.nodeCount += heap.nodeCount;
-    var newhead = mergeHeaps(this, heap);
+    var newhead = this.mergeHeaps(this, heap);
 
-    this.head = undefined;
+    this.head = newhead;
     heap.head = undefined;
 
     if (!newhead) return undefined;
@@ -123,18 +145,20 @@ BinomialHeap.prototype.union = function (heap) {
             cur = next;
         } else if (this.compare(cur, next) < 0) {
             cur.sibling = next.sibling;
-            linkTrees(cur, next);
+            this.linkTrees(cur, next);
         } else {
             if (typeof prev === 'undefined') {
                 newhead = next;
+                this.head = next;
             } else {
                 prev.sibling = next;
             }
 
-            linkTrees(next, cur);
+            this.linkTrees(next, cur);
             cur = next;
         }
         next = cur.sibling;
+        Visual.Tree.Binomial(this.ctx).fixTree(this.head);
     }
     this.head = newhead;
 }
@@ -147,10 +171,17 @@ BinomialHeap.prototype.union = function (heap) {
 BinomialHeap.prototype.insert = function (key) {
     var temp = new BinomialHeap();
     var newnode = new _Node(key);
+
+    this.animQueue.push(
+        Visual.Tree.Binomial(this.ctx).insert(this.head, newnode));
+
     temp.head = newnode;
     temp.nodeCount++;
+
     this.union(temp);
-    if (this.head === undefined) console.log("problem\n");
+
+    Visual.Tree.Binomial(this.ctx).fixTree(this.head);
+
     return newnode;
 }
 
@@ -178,10 +209,10 @@ BinomialHeap.prototype.findMin = function () {
  * @param {_Node} root node to remove
  * @param {_Node} prev node to replace it with
  */
-function removeTreeRoot (heap, root, prev) {
+BinomialHeap.prototype.removeTreeRoot = function (heap, root, prev) {
     // remove root
     if (root === heap.head) heap.head = root.sibling;
-    else prev.sibling = root.sibling;
+    else if (prev) prev.sibling = root.sibling;
 
     // reverse order of root's children and make new heap
     var newhead;
@@ -193,6 +224,13 @@ function removeTreeRoot (heap, root, prev) {
         newhead = child;
         child = next;
     }
+
+    Visual.Tree.Binomial(this.ctx).fixTree(newhead, prev?.x);
+
+    this.animQueue.push(
+        Visual.Tree.Binomial(this.ctx).mergeUp(heap.head, newhead)
+    );
+
     var newheap = new BinomialHeap();
     newheap.head = newhead;
     heap.union(newheap);
@@ -218,12 +256,102 @@ BinomialHeap.prototype.extractMin = function () {
         nextprev = next;
         next = next.sibling;
     }
-    removeTreeRoot(this, min, minPrev);
+    this.removeTreeRoot(this, min, minprev);
     this.nodeCount--;
 
     return min;
 }
 
+/**
+ * decreases the key of the current node
+ * @param {_Node} node 
+ * @param {int} key 
+ */
+BinomialHeap.prototype.decreaseKey = function (node, key) {
+    node.key = key;
+    var cur = node;
+    var par = cur.parent;
+
+    this.animQueue.push(
+        Visual.Tree.Binomial(this.ctx).select(this.head, node));
+    
+    while (par && this.compare(cur, par) < 0) {
+        this.animQueue.push(
+            Visual.Tree.Binomial(this.ctx).swap(this.head, cur, par));
+
+        var temp = cur.key;
+        cur.key = par.key;
+        par.key = temp;
+        cur = par;
+        par = par.parent;
+    }
+}
+
+/**
+ * @param {_Node} head 
+ * @param {int} key 
+ * @return {_Node} the found node if found, otherwise undefined
+ */
+function find (head, key) {
+    while (head) {
+        if (head.key == key) return head;
+        var found = find(head.child, key);
+        if (found) return found;
+        head = head.sibling;
+    }
+    return undefined;
+}
+
+BinomialHeap.prototype.find = function (key) {
+    this.animQueue.push(Visual.Tree.Binomial(this.ctx).select(this.head));
+    return this.recursiveFind(this.head, key);
+}
+
+BinomialHeap.prototype.recursiveFind = function (head, key) {
+    while (head) {
+        if (head.key == key) return head;
+
+        if (head.key < key && head.child) {
+            this.animQueue.push(
+                Visual.Tree.Binomial(this.ctx).moveCursor(this.head, head, head.child));
+            var found = this.recursiveFind(head.child, key);
+            if (found) return found;
+        }
+
+        this.animQueue.push(
+            Visual.Tree.Binomial(this.ctx).moveCursor(this.head, head, head.sibling));
+        
+        head = head.sibling;
+    }
+
+    return undefined;
+}
+
+/**
+ * searches for key and deletes it if found
+ * @param {int} key 
+ * @return {boolean} whether the key is actually deleted
+ */
+BinomialHeap.prototype.delete = function (key) {
+    var found = this.find(key);
+    if (!found) return false;
+
+    this.decreaseKey(found, Number.NEGATIVE_INFINITY); // makes node have unique minimum key of -inf
+    this.extractMin(); // remove it
+
+    Visual.Tree.Binomial(this.ctx).fixTree(this.head);
+
+    this.animQueue.push(
+        Visual.Tree.Binomial(this.ctx).select(this.head, this.head));    
+
+    this.nodeCount--;
+    return true;
+}
+
+/**
+ * prints the values of the keys of a tree
+ * @param {_Node} head 
+ */
 function printTree (head) {
     while (head) {
         document.body.append(head.key + " ");
@@ -232,6 +360,10 @@ function printTree (head) {
     }
 }
 
+/**
+ * prints the trees of a heap, with a '|' to separate them
+ * @param {_Node} head 
+ */
 function printHeap (head) {
     while (head) {
         document.body.append(head.key + " ");
@@ -241,11 +373,72 @@ function printHeap (head) {
     }
 }
 
+/**
+ * print statement format details:
+ * 
+ * trees can be size 1, 2, 4, 8, etc.
+ * trees of size 4+ are grouped into sets of 4
+ * those sets look like this:
+ *                   1
+ *                 2 4
+ *                 3
+ * they will show up in the output as:
+ *             1 2 3 4 |
+ * so, trees of size 8 would be two sets of 4:
+ *                     1
+ *                 2 6 8
+ *               3 5 7
+ *               4
+ * and output as 
+ *            1 2 3 4 5 6 7 8 |
+ * so, a group of seven total items would look like this:
+ *              1  2    4
+ *                 3  5 7
+ *                    6
+ * and ouput as
+ *           1 | 2 3 | 4 5 6 7 |
+ */
+/*
 var heap = new BinomialHeap();
+// random numbers to use for testing
+// DELETE LATER!
+heap.insert(1);
+heap.insert(48);
+heap.insert(5);
+heap.insert(34);
+heap.insert(20);
+heap.insert(56);
+heap.insert(17);
+*/
 
+/**
+ * inserts a key from user input
+ * @param {int} key 
+ */
 function insertKey(key) {
     document.body.append(document.createElement("br"));
     heap.insert(key);
     printHeap(heap.head);
 }
 
+/**
+ * searches for and deletes a key from user input
+ * @param {int} key 
+ */
+function deleteKey(key) {
+    document.body.append(document.createElement("br"));
+    var found = heap.delete(key);
+    if (found) printHeap(heap.head);
+    else document.body.append("key not found");
+}
+
+/**
+ * searches for a key from user input
+ * @param {int} key 
+ */
+function findKey(key) {
+    document.body.append(document.createElement("br"));
+    var found = find(heap.head, key);
+    if (found) document.body.append(true);
+    else document.body.append(false);
+}
