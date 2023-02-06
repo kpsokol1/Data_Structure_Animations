@@ -8,7 +8,7 @@ class RBTNode {
         this.right = null;
         this.color = RED;
         this.parent = null;
-        this.isLeaf = (key == null && value == null);
+        this.isLeaf = (key==null && value==null);
         if (this.isLeaf) this.color = BLACK;
     }
     linkLeft(node) {
@@ -59,11 +59,11 @@ class RBTNode {
         }
         let tree = node;
         while (tree) {
-            if (key < tree.key) { // move to left subtree
+            if (key < tree.key){ // move to left subtree
                 tree = tree.left;
             }
             else if (key > tree.key) {
-                if (tree.left) {
+                if (tree.left){
                     rank += 1 + tree.left.getSize();
                     tree = tree.right;
                 }
@@ -78,7 +78,7 @@ class RBTNode {
             }
         }
         return -1;
-
+        
     }
     getGrandparent() {
         if (this.parent == null) return null;
@@ -210,7 +210,7 @@ class RBTree {
             }
         }
         newNode.parent = oldNode.parent;
-
+        
     }
     rotateLeft(node) {
         let right = node.right;
@@ -224,18 +224,12 @@ class RBTree {
         node.linkLeft(left.right);
         left.linkRight(node);
     }
-    minimum(node) {
-        while (node.left != this.leaf) {
-            node = node.left;
-        }
-        return node;
-    }
     deleteNode(key) {
         let forRemove = this.leaf;
         let tmp = this.root;
 
         while (tmp != this.leaf) {
-            if (tmp.key == key) {
+            if (tmp.key === key) {
                 forRemove = tmp;
                 break;
             }
@@ -260,13 +254,11 @@ class RBTree {
             this.replaceNode(forRemove, forRemove.left);
         }
         else {
-            minRight = this.minimum(forRemove.right);
-
+            minRight = this.getMin(forRemove.right);
             minRightColor = minRight.color;
             newMinRight = minRight.right;
 
-            if (minRight.parent == forRemove) {
-
+            if (minRight.parent === forRemove) {
                 newMinRight.parent = minRight;
             }
             else {
@@ -274,6 +266,7 @@ class RBTree {
                 minRight.right = forRemove.right;
                 minRight.right.parent = minRight;
             }
+
             this.replaceNode(forRemove, minRight);
             minRight.left = forRemove.left;
             minRight.left.parent = minRight;
@@ -350,6 +343,73 @@ class RBTree {
 
         node.color = 1;
     }
+
+}
+class Gridline {
+    constructor(key) {
+        this.key = key;
+
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.element1 = null;
+        this.element2 = null;
+    }
+    position(x,y,z){
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.key = x + "," + y;
+    }
+    show() {
+        let x = this.x;
+        let y = this.y;
+        if (this.element1 == null) {
+            this.element1 = document.createElement("div");
+            this.element1.style.position = "absolute";
+            this.element1.style.width = "1px";
+            this.element1.style.height = "100%";
+            this.element1.style.backgroundColor = "black";
+            this.element1.style.zIndex = this.z;
+            this.element1.style.top = "0";
+            this.element1.style.left = x + "px";
+            document.body.appendChild(this.element1);
+        }
+        else{
+            this.element1.style.zIndex = this.z;
+            this.element1.style.left = x + "px";
+            //set style to show
+            this.element1.style.display = "block";
+        }
+        if (this.element2 == null) {
+            this.element2 = document.createElement("div");
+            this.element2.style.position = "absolute";
+            this.element2.style.width = "100%";
+            this.element2.style.height = "1px";
+            this.element2.style.backgroundColor = "black";
+            this.element2.style.zIndex = this.z;
+            this.element2.style.top = y + "px";
+            this.element2.style.left = "0";
+            document.body.appendChild(this.element2);
+        }
+        else{
+            this.element2.style.zIndex = this.z;
+            this.element2.style.top = y + "px";
+            //set style to show
+            this.element2.style.display = "block";
+        }
+    }
+    hide() {
+        this.element1.style.display = "none";
+        this.element2.style.display = "none";
+    }
+    delete() {
+        if (this.element1 != null){
+            this.element1.parentElement.removeChild(this.element1);
+            this.element2.parentElement.removeChild(this.element2);
+        }
+    }
+
 }
 class RBTVisualize {
     constructor() {
@@ -367,40 +427,50 @@ class RBTVisualize {
         this.element.style.left = "0";
         document.body.appendChild(this.element);
         this.elements = {}
+        this.gridLines = {};
     }
     insert(key, value) {
-        if (key in this.elements) {
+        if (key in this.elements){ 
             warn("Key already exists");
             return;
         }
         let node = this.tree.insert(key, value);
         this.nodes.push(node.key);
         this.update();
+        this.gridLines[node.key] = new Gridline(node.key);
     }
     delete(key) {
         if (!(key in this.elements)) {
-            warn("Key not found");
+            warn("Key does not exist");
+            return;
         }
-        let node = this.tree.deleteNode(key);
-        this.nodes = this.nodes.filter(node => node.key != key);
-        this.elements[key].remove();
-        //this.elements[key] = null;
+        let node = this.tree.get(key);
+        this.nodes = this.nodes.filter((x) => x != node.key);
+        this.tree.deleteNode(key);
+        if (this.elements[node.key] != null) {
+            this.element.removeChild(this.elements[node.key]);
+        }
+        if (this.edges[node.key] != null) {
+            this.element.removeChild(this.edges[node.key]);
+        }
+        delete this.elements[node.key];
+        this.gridLines[node.key].delete();
         this.update();
     }
     update() {
-        for (let key of this.nodes) {
+        for (let key of this.nodes){
             let node = this.tree.get(key);
             if (node == null) continue;
             if (this.elements[node.key] == null) {
                 this.elements[node.key] = document.createElement("div");
-
+                
             }
             let element = this.elements[node.key];
             let width = 30;
             let height = 30;
             element.style.position = "absolute";
-            element.style.width = width + "px";
-            element.style.height = height + "px";
+            element.style.width = width+"px";
+            element.style.height = height+"px";
             element.style.backgroundColor = node.isRed() ? "red" : "black";
             element.style.borderRadius = "50%";
             element.style.zIndex = "1";
@@ -414,13 +484,13 @@ class RBTVisualize {
             element.style.textAlign = "center";
             //element.align = "center";
             //element.verticalAlign = "middle";
-            element.style.marginLeft = -width / 2;
-            element.style.marginTop = -height / 2;
+            element.style.marginLeft = -width/2;
+            element.style.marginTop = -height/2;
             this.element.appendChild(element);
-
+            
 
         }
-        for (let key of this.nodes) {
+        for (let key of this.nodes){
             let node = this.tree.get(key);
             let width = 30;
             let height = 30;
@@ -470,21 +540,38 @@ class RBTVisualize {
                 edge.style.backgroundColor = "black";
                 edge.style.zIndex = "0";
                 edge.align = "center";
-                edge.style.marginLeft = -length / 2 + "px";
+                edge.style.marginLeft = -length/2 + "px";
                 edge.style.marginTop = "-1px";
                 edge.style.transform = "rotate(" + angle + "rad)";
-                edge.style.top = (y1 / 2 + y2 / 2) + "px";
-                edge.style.left = (x1 / 2 + x2 / 2) + "px";
+                edge.style.top = (y1/2+y2/2) + "px";
+                edge.style.left = (x1/2+x2/2) + "px";
                 this.element.appendChild(edge);
             }
+        }
+        let ShowGridlines = true;
+        if (!ShowGridlines) return;
+        //add gridlines over the nodes for debugging
+        for (let key of this.nodes){
+            let node = this.tree.get(key);
+            let width = 30;
+            let height = 30;
+            let y = (node.getLevel() * height + 5)
+            let x = (node.getRank() * width + 5)
+            let element = this.elements[node.key];
+            let zIndex = 2;
+            if (this.gridLines[node.key] == null) {
+                this.gridLines[node.key] = new Gridline(key);
+            }
+            this.gridLines[node.key].position(x,y,zIndex);
+            this.gridLines[node.key].show();
         }
     }
 }
 let rbt = new RBTVisualize();
 rbt.insert(1, 1);
 addCommand("insert", "insert", (pair) => {
-    let key = parseFloat(pair[0]);
-    let value = parseFloat(pair[1]);
+    let key=parseFloat(pair[0]);
+    let value=parseFloat(pair[1]);
     if (isNaN(key)) {
         warn("Invalid input");
         return;
@@ -507,3 +594,4 @@ rbt.insert(-1, -1);
 rbt.insert(-2, -2);
 rbt.insert(-3, -3);
 rbt.insert(-4, -4);
+rbt.delete(1);
