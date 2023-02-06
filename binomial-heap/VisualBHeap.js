@@ -1,18 +1,18 @@
-Visual.Tree.Binomial = (canvas) => 
+Visual.Tree.Binomial = (ctx) => 
 {
     const MARGIN_TOP = 50;
     const MARGIN_LEFT = 60;
     const NODE_RADIUS = 13;
     const SCREEN_WIDTH = 1000;
-    const SCREEN_HEIGHT = 300;
+    const SCREEN_HEIGHT = 500;
     const MAX_DEGREE = 5;
     const DIFF_X = (SCREEN_WIDTH - 2 * MARGIN_LEFT) / (2 ** MAX_DEGREE - 1);
     const DIFF_Y = (SCREEN_HEIGHT - 2 * MARGIN_TOP) / (MAX_DEGREE + 1);
 
-    let ctx = canvas.getContext('2d');
+    ctx.resetTransform();
     ctx.scale(
-        canvas.width / SCREEN_WIDTH,
-        canvas.height / SCREEN_HEIGHT
+        ctx.canvas.width / SCREEN_WIDTH,
+        ctx.canvas.height / SCREEN_HEIGHT
     );
 
     return {
@@ -22,6 +22,21 @@ Visual.Tree.Binomial = (canvas) =>
         link:       link,
         fixTree:    fixTree,
         fixSubTree: fixSubTree,
+        select:     select,
+        moveCursor: moveCursor,
+        swap:       swap,
+    }
+
+    function select (tree, ...nodes) {
+        return Visual.Tree(ctx).select(tree, NODE_RADIUS, ...nodes);
+    }
+
+    function moveCursor (tree, a, b) {
+        return Visual.Tree(ctx).moveCursor(tree, a, b, NODE_RADIUS);
+    }
+
+    function swap (tree, a, b) {
+        return Visual.Tree(ctx).swap(tree, a, b, NODE_RADIUS);
     }
 
     function getChildPos (tree, index) {
@@ -44,7 +59,7 @@ Visual.Tree.Binomial = (canvas) =>
             drawSubTree(cur);
         }
     
-        drawNode(tree, NODE_RADIUS, canvas);
+        drawNode(tree, NODE_RADIUS, ctx);
     }
     
     function treeWidth (degree) {
@@ -64,15 +79,15 @@ Visual.Tree.Binomial = (canvas) =>
             let n_dx = MARGIN_LEFT / 2 + DIFF_X;
     
             let draw = (progress) => {
-                clearCanvas(canvas);
+                clearCanvas(ctx);
     
                 ctx.save();
                 ctx.translate(r_dx * progress, 0);
-                drawTree(_root);
+                drawTree(_root, NODE_RADIUS, ctx);
                 ctx.restore();
                 ctx.save();
                 ctx.translate(n_dx * progress, 0);
-                drawNode(_node, NODE_RADIUS, canvas);
+                drawNode(_node, NODE_RADIUS, ctx);
                 ctx.restore();
             }
     
@@ -89,12 +104,12 @@ Visual.Tree.Binomial = (canvas) =>
         let b = cloneTree(heapB);
     
         let draw = (progress) => {
-            clearCanvas(canvas);
-            drawTree(a);
+            clearCanvas(ctx);
+            drawTree(a, NODE_RADIUS, ctx);
     
             ctx.save();
             ctx.translate(0, -DIFF_Y * progress);
-            drawTree(b);
+            drawTree(b, NODE_RADIUS, ctx);
             ctx.restore();
         }
     
@@ -127,7 +142,7 @@ Visual.Tree.Binomial = (canvas) =>
         let rx = right.x;
     
         let draw = (progress) => {
-            clearCanvas(canvas);
+            clearCanvas(ctx);
             
             fixTree(l, lx + l_dx * progress);
             fixSubTree(r, rx + r_dx * progress);
@@ -137,8 +152,8 @@ Visual.Tree.Binomial = (canvas) =>
                 drawSubTree(cur);
                 cur = cur.sibling;
             }
-            drawTree(l);
-            drawTree(r);
+            drawTree(l, NODE_RADIUS, ctx);
+            drawTree(r, NODE_RADIUS, ctx);
         }
     
         fixTree(left, lx + l_dx);
@@ -173,7 +188,7 @@ Visual.Tree.Binomial = (canvas) =>
         let b_dy = DIFF_Y;
     
         let draw = (progress) => {
-            clearCanvas(canvas);
+            clearCanvas(ctx);
     
             ctx.beginPath();
             ctx.moveTo(

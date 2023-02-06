@@ -36,7 +36,7 @@ window.onload = function() {
     doc.addElement('operation');
     doc.addElement('operand');
 
-    let tree = new BinaryTree(doc.canvas);
+    let tree = new BinaryTree(doc.canvas.getContext('2d'));
    
     tree.insert(50);
     tree.insert(30);

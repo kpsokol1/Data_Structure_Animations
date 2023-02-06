@@ -29,8 +29,7 @@ window.onload = function() {
     doc.addElement('operation');
     doc.addElement('operand');
 
-    let vHeap = new VisualBHeap(doc.canvas);
-    let heap = new BinomialHeap(vHeap);
+    let heap = new BinomialHeap(doc.canvas.getContext('2d'));
 
     for (let i = 0; i < 31; ++i) {
         heap.insert(i);

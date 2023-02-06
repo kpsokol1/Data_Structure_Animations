@@ -1,4 +1,4 @@
-Visual.Tree = function (canvas) {
+Visual.Tree = function (ctx) {
 
     return {
         select: select,
@@ -12,13 +12,13 @@ Visual.Tree = function (canvas) {
         nodes = nodes.map(node => cloneNode(node));
     
         let draw = (progress) => {
-            clearCanvas(canvas);
-            if (root) drawTree(root, nodeSize, canvas);
+            clearCanvas(ctx);
+            if (root) drawTree(root, nodeSize, ctx);
             // highlight the nodes
             let weight = 3 + 2 * Math.sin(progress * 2 * Math.PI);
             nodes.forEach(node => {
-                drawNode(node, nodeSize, canvas);
-                drawCursor(node.x, node.y, weight, nodeSize, canvas);
+                drawNode(node, nodeSize, ctx);
+                drawCursor(node.x, node.y, weight, nodeSize, ctx);
             });
         }
     
@@ -38,12 +38,12 @@ Visual.Tree = function (canvas) {
         let duration = () => { return animInterval() * d / 200; };
         
         let draw = (progress) => {
-            clearCanvas(canvas);
-            drawTree(root, nodeSize, canvas);
+            clearCanvas(ctx);
+            drawTree(root, nodeSize, ctx);
     
             let x = a.x + (b.x - a.x) * progress;
             let y = a.y + (b.y - a.y) * progress;
-            drawCursor(x, y, 3, nodeSize, canvas);
+            drawCursor(x, y, 3, nodeSize, ctx);
         }
     
         let _select = select(tree, nodeSize, nodeA);
@@ -74,10 +74,10 @@ Visual.Tree = function (canvas) {
             nodeList[j].offsetX = (ax - bx) * progress;
             nodeList[j].offsetY = (ay - by) * progress;
     
-            clearCanvas(canvas);
-            drawTree(nodeList[0], nodeSize, canvas);
-            drawNode(nodeList[i], nodeSize, canvas);
-            drawNode(nodeList[j], nodeSize, canvas);
+            clearCanvas(ctx);
+            drawTree(nodeList[0], nodeSize, ctx);
+            drawNode(nodeList[i], nodeSize, ctx);
+            drawNode(nodeList[j], nodeSize, ctx);
         }
      
         return new _Animation(Timing.linear, draw, animInterval);

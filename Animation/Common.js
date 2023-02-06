@@ -22,15 +22,12 @@
 
 var Visual = {};
 
-function clearCanvas (canvas) {
-    let ctx = canvas.getContext('2d');
+function clearCanvas (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function drawCursor (x, y, weight, radius, canvas) {
-    console.log(x, y, weight, radius, canvas);
-
-    let ctx = canvas.getContext('2d');
+function drawCursor (x, y, weight, radius, ctx) {
+    //console.log(x, y, weight, radius, canvas);
 
     ctx.beginPath();
     ctx.strokeStyle = 'cyan';
@@ -39,13 +36,14 @@ function drawCursor (x, y, weight, radius, canvas) {
     ctx.stroke();
 }
 
-function drawTree (node, size, canvas) {
-    let ctx = canvas.getContext('2d');
+function drawTree (node, size, ctx) 
+{
+    if (!node) return;
 
     switch (node.type) 
     {
     case 'Binomial': {
-        let drawSubTree = (tree) => {
+        let drawSubTree = (tree, ctx) => {
             if (!tree) return;
     
             for (let cur = tree.child; cur; cur = cur.sibling) {
@@ -55,14 +53,14 @@ function drawTree (node, size, canvas) {
                 ctx.moveTo(tree.x, tree.y);
                 ctx.lineTo(cur.x, cur.y);
                 ctx.stroke();
-                drawSubTree(cur);
+                drawSubTree(cur, ctx);
             }
         
-            drawNode(tree, size, canvas);
+            drawNode(tree, size, ctx);
         }
 
         for (let cur = node; cur; cur = cur.sibling) {
-            drawSubTree(cur);
+            drawSubTree(cur, ctx);
         }
     }   break;
 
@@ -75,7 +73,7 @@ function drawTree (node, size, canvas) {
             ctx.moveTo(node.x, node.y);
             ctx.lineTo(node.left.x, node.left.y);
             ctx.stroke();
-            drawTree(node.left, size, canvas);
+            drawTree(node.left, size, ctx);
         }
         if (node.right) {
             ctx.lineWidth = 1;
@@ -84,9 +82,9 @@ function drawTree (node, size, canvas) {
             ctx.moveTo(node.x, node.y);
             ctx.lineTo(node.right.x, node.right.y);
             ctx.stroke();
-            drawTree(node.right, size, canvas);
+            drawTree(node.right, size, ctx);
         }
-        drawNode(node, size, canvas);
+        drawNode(node, size, ctx);
     }
 }
 
@@ -121,14 +119,14 @@ function cloneTree (node) {
 
     switch (node.type) {
     case 'Binomial': {
-        let _root = cloneNode(root);
+        let _root = cloneNode(node);
     
-        _root.child = cloneTree(root.child);
+        _root.child = cloneTree(node.child);
         if (_root.child) {
             _root.child.parent = _root;
         }
     
-        _root.sibling = cloneTree(root.sibling);
+        _root.sibling = cloneTree(node.sibling);
     
         return _root;
     }
@@ -171,11 +169,9 @@ function flattenTree (tree) {
     }
 }
 
-function drawNode (node, size, canvas) {
+function drawNode (node, size, ctx) {
     let x = node.x + (node.offsetX ? node.offsetX : 0);
     let y = node.y + (node.offsetY ? node.offsetY : 0);
-
-    let ctx = canvas.getContext('2d');
 
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2, true);
