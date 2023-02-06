@@ -214,12 +214,18 @@ class RBTree {
         node.linkLeft(left.right);
         left.linkRight(node);
     }
+    minimum(node) {
+        while (node.left != this.leaf) {
+            node = node.left;
+        }
+        return node;
+    }
     deleteNode(key) {
         let forRemove = this.leaf;
         let tmp = this.root;
 
         while (tmp != this.leaf) {
-            if (tmp.key === key) {
+            if (tmp.key == key) {
                 forRemove = tmp;
                 break;
             }
@@ -244,11 +250,13 @@ class RBTree {
             this.replaceNode(forRemove, forRemove.left);
         }
         else {
-            minRight = this.getMin(forRemove.right);
+            minRight = this.minimum(forRemove.right);
+
             minRightColor = minRight.color;
             newMinRight = minRight.right;
 
-            if (minRight.parent === forRemove) {
+            if (minRight.parent == forRemove) {
+
                 newMinRight.parent = minRight;
             }
             else {
@@ -256,7 +264,6 @@ class RBTree {
                 minRight.right = forRemove.right;
                 minRight.right.parent = minRight;
             }
-
             this.replaceNode(forRemove, minRight);
             minRight.left = forRemove.left;
             minRight.left.parent = minRight;
@@ -367,6 +374,7 @@ class RBTVisualize {
         let node = this.tree.deleteNode(key);
         this.nodes = this.nodes.filter(node => node.key != key);
         this.elements[key].remove();
+        //this.elements[key] = null;
         this.update();
     }
     update() {
