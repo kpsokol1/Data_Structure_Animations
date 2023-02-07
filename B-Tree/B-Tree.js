@@ -29,7 +29,7 @@ class BTree{
   }
 
   delete(key){
-    return this.root.delete(key,0);
+    return this.root.delete(key,0,0);
   }
 }
 
@@ -112,14 +112,15 @@ class Node {
   //search
   search(key, level,index){
     let tempNode = this;
-    animationQueue.push(function() {Animations.highlight(tempNode,level,index,"red", false,key)});
+    let tempTree = JSON.parse(JSON.stringify(b_tree));
+    animationQueue.push(function() {Animations.highlight(tempNode,level,index,"red", false,key,tempTree,false)});
     let i = 0;
     while(i < this.keys.length && key > this.keys[i]){                  //locate roughly where to look (iterate through the keys until we are greater than or equal to the key)
       i++;
     }
 
     if(i < this.keys.length && key === this.keys[i]){                     //we found the key
-      animationQueue.push(function() {Animations.highlight(tempNode,level,index,"green", true,key)});
+      animationQueue.push(function() {Animations.highlight(tempNode,level,index,"green", true,key,tempTree,false)});
       return "found";                                                    //return the node the key was found out and the index of the key in the node  //fixme may need to change this later
     }
 
@@ -132,14 +133,25 @@ class Node {
   }
 
   //deletes a node from the B-tree given a key  //fixme cannot delete root?
-  delete(key){
+  delete(key,level,i){
+    let tempNode = JSON.parse(JSON.stringify(this));            //deep copies for later
+    let tempTree = JSON.parse(JSON.stringify(b_tree));
+    animationQueue.push(function() {Animations.highlight(tempNode,level,i,"red", false,key,tempTree,false)});
+    console.log(1);
     let index = this.keys.indexOf(key);                                     //check if the key we are looking for is in the current node
     if(index !== -1){                                                       //the key is in the current node
-      if(this.isLeaf){                                                      //the node to delete from is a leaf
-        this.removeFromLeaf(index);                                              //all we need to do is delete it from the leaf (we are ensured it has at least t keys due to preemptive merge)
+      if(this.isLeaf){
+        animationQueue.push(function() {Animations.highlight(tempNode,level,i,"red", true,key,tempTree,false)});//the node to delete from is a leaf
+        console.log(5);
+        this.removeFromLeaf(index);
+        //all we need to do is delete it from the leaf (we are ensured it has at least t keys due to preemptive merge)
+        let tempNode_1 = JSON.parse(JSON.stringify(this));            //deep copies for later
+        let tempTree_1 = JSON.parse(JSON.stringify(b_tree));
+        animationQueue.push(function() {Animations.removeLeafKey(tempNode_1,level,index,tempTree_1,false)});
+        console.log(6);
       }
       else{                                                                 //the node to delete from is not a leaf
-        this.removeFromNonLeaf(index);
+        this.removeFromNonLeaf(index,level,index);
       }
     }
     //the key is not in the current node
@@ -161,14 +173,14 @@ class Node {
 
       if(flag){
         if(wasFarRightChild && childToRecurseOnIndex > this.keys.length){
-          this.childNodes[childToRecurseOnIndex-1].delete(key);                             //we lost a child at the end after fill/merge and we need to recurse on one less
+          this.childNodes[childToRecurseOnIndex-1].delete(key,level+1,childToRecurseOnIndex-1);                             //we lost a child at the end after fill/merge and we need to recurse on one less
         }
         else{
-          this.childNodes[childToRecurseOnIndex].delete(key);                               //recurse on child which we know has at least t keys
+          this.childNodes[childToRecurseOnIndex].delete(key,level+1,childToRecurseOnIndex);                               //recurse on child which we know has at least t keys
         }
       }
       else{
-        this.delete(key);
+        this.delete(key,level,0);   //fixme not sure what is going on here
       }
     }
   }
@@ -183,27 +195,49 @@ class Node {
   }
 
   //deletes a key from a non-leaf (index is the index of the key to be removed)
-  removeFromNonLeaf(index){
+  removeFromNonLeaf(index,level){
     let key = this.keys[index];
 
     //case 2a: left child has at least t keys (replace with the predecessor), recursively delete the predecessor
     if(this.childNodes[index].keys.length >= this.t){
-      let predecessor = this.getPredecessor(index);                             //get the key of the predecessor
-      this.keys[index] = predecessor;                                           //replace the value to be deleted with the predecessor
-      this.childNodes[index].delete(predecessor);                                //recursively delete the predecessor
+      let predecessorResults = this.getPredecessor(index,level);
+      let predecessor = predecessorResults[0];                             //get the key of the predecessor
+      let predecessorLevel = predecessorResults[1];
+      let predecessorKey = predecessor.keys[predecessor.keys.length-1];
+      //animate predecessor moving up
+      let tempRoot = JSON.parse(JSON.stringify(this));
+      let tempTree = JSON.parse(JSON.stringify(b_tree));
+      let tempPredecessor = JSON.parse(JSON.stringify(predecessor));
+      animationQueue.push(function() {Animations.highlight(tempPredecessor,predecessorLevel,index,"red", false,predecessorKey,tempTree,false)});
+      console.log(2);
+      animationQueue.push(function() {Animations.highlight(tempPredecessor,predecessorLevel,index,"red", true,predecessorKey,tempTree,false)});
+      console.log(3);
+      animationQueue.push(function() {Animations.transferPredecessor(tempRoot,level,index,predecessor,predecessorLevel,predecessor.keys.length-1,tempTree,false)}); //fixme do we have to handle the promise that is returned?
+      console.log(4);
+      this.keys[index] = predecessor.keys[predecessor.keys.length-1];                                           //replace the value to be deleted with the predecessor
+      this.childNodes[index].delete(predecessor.keys[predecessor.keys.length-1],level+1,index);                                //recursively delete the predecessor
     }
 
     //case 2b: right child has at least t keys (replace with the successor), recursively delete the successor
     else if(this.childNodes[index+1].keys.length >= this.t){
-      let successor = this.getSuccessor(index);                                 //get the key of the successor
-      this.keys[index] = successor;                                             //replace the value to be deleted with the successor
-      this.childNodes[index+1].delete(successor);                               //recursively delete the successor
+      let successorResults =  this.getSuccessor(index,level);
+      let successor = successorResults[0];                                 //get the key of the successor
+      let successorLevel = successorResults[1];
+      let successorKey = successor.keys[0];
+      //animate successor moving up
+      let tempRoot = JSON.parse(JSON.stringify(this));
+      let tempTree = JSON.parse(JSON.stringify(b_tree));
+      animationQueue.push(function() {Animations.highlight(successor,successorLevel,index,"red", false,successorKey,tempTree,false)});
+      animationQueue.push(function() {Animations.highlight(successor,successorLevel,index,"red", true,successorKey,tempTree,false)});
+      animationQueue.push(function() {Animations.transferSuccessor(tempRoot,level,index,successor,successorLevel,tempTree,false)});
+      this.keys[index] = successor.keys[0];                                             //replace the value to be deleted with the successor
+      this.childNodes[index+1].delete(successor.keys[0],level+1,index+1);                               //recursively delete the successor
     }
 
     //case 2c: neither the left or the right child has at least t keys (merge left and right children and the key), recursively delete the key from the merged array
     else{
-      if(this.merge(index)){
-        this.childNodes[index].delete(key);                                       //delete the key from the left child which everything was merged into
+      if(this.merge(index,level)){
+        this.childNodes[index].delete(key,level);                                       //delete the key from the left child which everything was merged into
       }
       else{
         this.delete(key);
@@ -212,37 +246,48 @@ class Node {
   }
 
   //returns the key value of the predecessor
-  getPredecessor(index){
+  getPredecessor(index,level){
     let currentNode = this.childNodes[index];                                   //the child node to start looking in
     while(!currentNode.isLeaf){
+      level++;
       currentNode = currentNode.childNodes[currentNode.keys.length];            //keep traversing right until we have reached a leaf
     }
-    return currentNode.keys[currentNode.keys.length-1];                         //return the rightmost key in the node
+    let returnValue = JSON.parse(JSON.stringify(currentNode));
+    return [returnValue,level+1]                         //return the rightmost key in the node
   }
 
   //returns the key value of the successor
-  getSuccessor(index){
+  getSuccessor(index,level){
     let currentNode = this.childNodes[index+1];                                 //the child node to start looking in
     while(!currentNode.isLeaf){
+      level++;
       currentNode = currentNode.childNodes[0];                                  //keep traversing left until we have reached a leaf
     }
-    return currentNode.keys[0];                                                 //return the leftmost key in the node
+
+    let returnValue = JSON.parse(JSON.stringify(currentNode));
+    return [returnValue,level+1];                                                 //return the leftmost key in the node   //fixe does this need to be a deep copy?
+
   }
 
   //merges the left and right child and the parent key
-  merge(index){
+  merge(index,level){
     let left = this.childNodes[index];                                          //the left child
+    let leftCopy = JSON.parse(JSON.stringify(left));                                                                                //fixme this index may not always work
+    let tempTree = JSON.parse(JSON.stringify(b_tree));
     let right = this.childNodes[index+1];                                       //the right child
+    let rightCopy = JSON.parse(JSON.stringify(right));
+    let tempNode = JSON.parse(JSON.stringify(this));
+    animationQueue.push(function() {Animations.highlight(leftCopy,level+1,index,"red", false,0,tempTree,true)});
+    animationQueue.push(function() {Animations.highlight(rightCopy,level+1,index+1,"red", false,0,tempTree,true)});
+    animationQueue.push(function() {Animations.moveDownLevel(tempTree,tempNode,level,index)});
 
     left.keys.push(this.keys[index]);                                           //add the parent's value to the left array
-
     left.keys.push.apply(left.keys,right.keys);                                 //copy the right keys to the left   //fixme is this correct?
 
     //check if we are working with leaves and if we need to deal with children or not
     if(!left.isLeaf){
       left.childNodes.push.apply(left.childNodes,right.childNodes);             //append the children from the right over to the left array
     }
-
     //delete the parent key and move everything to the left
     for(let i = index + 1; i <= this.keys.length; i++){
       this.keys[i-1] = this.keys[i];                                             //move everything to the left
@@ -254,6 +299,8 @@ class Node {
     }
     this.keys.length = this.keys.length - 1;                                    //deleted a key so the length of the keys array gets reduces by 1
     this.childNodes.length = this.childNodes.length - 1;                        //deleted the right child so the length of the children array gets reduced by 1
+    let temp_tree_2 = JSON.parse(JSON.stringify(b_tree));
+    animationQueue.push(function() {Animations.drawTree(temp_tree_2,null,true,level,index)});
     if(this.keys.length === 0){
       this.keys = left.keys;
       this.childNodes = left.childNodes;
@@ -274,7 +321,7 @@ class Node {
 
 
   //makes a child that we were going to recurse on with t-1 nodes have t nodes
-  fill(index){
+  fill(index,level){
 
     //case 3a: node only has t-1 keys, but one of its siblings has t keys
     if(index < this.childNodes.length-1 && this.childNodes[index+1].keys.length >= this.t){      //right sibling has at least t keys so do a left rotation
@@ -358,24 +405,27 @@ class Node {
 
 let b_tree = new BTree(2);
 b_tree.insert(1);
-  b_tree.insert(2);
-  b_tree.insert(3);
-  b_tree.insert(4);
-   b_tree.insert(5);
+   b_tree.insert(2);
+   b_tree.insert(3);
+   b_tree.insert(4);
+   b_tree.insert(0);
+    b_tree.insert(5);
   b_tree.insert(6);
    b_tree.insert(7);
    b_tree.insert(8);
   b_tree.insert(9);
-  b_tree.insert(10);
-  b_tree.insert(11);
-  b_tree.insert(12);
-  b_tree.insert(13);
-  b_tree.insert(14);
-  b_tree.delete(4);
+  // b_tree.insert(10);
+  // b_tree.insert(11);
+  // b_tree.insert(12);
+  // b_tree.insert(13);
+  // b_tree.insert(14);
+  //b_tree.delete(4);
 
 Animations.drawTree(b_tree);
-b_tree.search(7);
-Animations.runQueue(b_tree,1500);
+//let oldTree = JSON.parse(JSON.stringify(b_tree));
+//b_tree.delete(2);
+b_tree.delete(4);
+Animations.runQueue(1000);
 //b_tree.search(2);
 //Animations.runQueue(b_tree,1500);
 //Animations.clearTree();
