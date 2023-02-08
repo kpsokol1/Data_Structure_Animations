@@ -82,8 +82,9 @@ function drawTree (node, size, ctx)
     }   break;
 
     case 'Binary':
+        if (node.isLeaf) return;
     default:
-        if (node.left) {
+        if (node.left && !node.left.isLeaf) {
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
@@ -92,7 +93,7 @@ function drawTree (node, size, ctx)
             ctx.stroke();
             drawTree(node.left, size, ctx);
         }
-        if (node.right) {
+        if (node.right && !node.right.isLeaf) {
             ctx.lineWidth = 1;
             ctx.strokeStyle = 'black';
             ctx.beginPath();
@@ -120,6 +121,7 @@ function cloneNode (node) {
         };
 
     case 'Binary':
+        if (node.isLeaf) return null;
     default:
         return {
             key: node.key,
@@ -150,14 +152,15 @@ function cloneTree (node) {
     }
 
     case 'Binary':
+        if (node.isLeaf) return null;
     default: {
         let _root = cloneNode(node);
     
-        if (node.left)  {
+        if (node.left && !node.left.isLeaf)  {
             _root.left = cloneTree(node.left);
             _root.left.parent = _root;
         }
-        if (node.right) {
+        if (node.right && !node.right.isLeaf) {
             _root.right = cloneTree(node.right);
             _root.right.parent = _root;
         }
@@ -168,6 +171,7 @@ function cloneTree (node) {
 
 function flattenTree (tree) {
     if (!tree) return [];
+    if (tree.isLeaf) return [];
 
     switch (tree.type) {
     case 'Binomial': {
