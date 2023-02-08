@@ -73,7 +73,7 @@ return {
                 drawTree(root, nodeSize, canvas.layer0);
             });
     
-        return new CompositeAnimation(this.select(tree, nodeSize, 'cyan', nodeA), move);
+        return new CompositeAnimation(this.select(tree, nodeSize, 'cyan', a), move);
     },
     
     swap: function (tree, nodeA, nodeB, nodeSize) {

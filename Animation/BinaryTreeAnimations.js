@@ -61,7 +61,7 @@ return {
         node.x = getPos(0).x;
         node.y = getPos(0).y;
 
-        if (!tree || tree.isLeaf)
+        if (tree == node)
             return this.select(tree, 'yellow', node);
     
         let _parent = cloneNode(node.parent);

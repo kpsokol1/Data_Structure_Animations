@@ -165,18 +165,18 @@ class RBTree {
         return node;
     }
     insertNode(node) {
-        if (this.root == null || this.root.isLeaf) {
+        if (this.root == null) {
+            this.root = node;
             node.setBlack();
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).insert(this.root, node));
-            this.root = node;
             return;
         }
         let curr = this.root;
         while (curr) {
-            node.parent = curr;
             if (node.key < curr.key) {
                 if (curr.left == this.leaf) {
+                    node.parent = curr;
                     this.animQueue.push(
                         TreeAnims.Binary(this.canvas).insert(this.root, node));
                     curr.left = node;
@@ -184,10 +184,11 @@ class RBTree {
                 } else {
                     this.animQueue.push(
                         TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.left));
+                    curr = curr.left;
                 }
-                curr = curr.left;
             } else {
                 if (curr.right == this.leaf) {
+                    node.parent = curr;
                     this.animQueue.push(
                         TreeAnims.Binary(this.canvas).insert(this.root, node));
                     curr.right = node;
@@ -195,8 +196,8 @@ class RBTree {
                 } else {
                     this.animQueue.push(
                         TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.right));
+                    curr = curr.right;
                 }
-                curr = curr.right;
             }
         }
         this.balanceInsert(node);
@@ -307,7 +308,7 @@ class RBTree {
             }
         }
 
-        if (tmp.isLeaf) return;     // Avoid crashing when the key is not in the tree.
+        if (forRemove == this.leaf) return;     // Avoid crashing when the key is not in the tree.
 
         let minRight = forRemove;
         let minRightColor = minRight.color;
@@ -359,6 +360,8 @@ class RBTree {
     }
     balanceDelete(node) {
         while (node != this.root && node.color == 'black') {
+            console.log(node);
+
             if (node == node.parent.left) {
                 let brother = node.parent.right;
 
@@ -386,6 +389,11 @@ class RBTree {
                         this.animQueue.push(
                             TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.left));
                         this.rotateRight(brother);
+
+                        // For some reason, brother becomes node's parent after the rotation,
+                        // so I had to manually reset node's parent.
+                        node.parent = brother.parent.parent;
+
                         brother = node.parent.right;
                     }
 
@@ -423,6 +431,11 @@ class RBTree {
                         this.animQueue.push(
                             TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
                         this.rotateLeft(brother);
+
+                        // For some reason, brother becomes node's parent after the rotation,
+                        // so I had to manually reset node's parent.
+                        node.parent = brother.parent.parent;
+                    
                         brother = node.parent.left;
                     }
 
