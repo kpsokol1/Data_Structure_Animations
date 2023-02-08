@@ -20,15 +20,32 @@
     };
 })();
 
-var Visual = {};
+function createElement(ele, attrs) {
+    //create the element with a specified string:
+    let element = document.createElement(ele);
+
+    //create a for...in loop set attributes:
+    for (let val in attrs) {
+        //for support in the setAttrubute() method:
+        if (element.setAttribute) {
+            if (element[val] in element) {
+               element.setAttribute(val, attrs[val]);
+            } else {
+                element[val] = attrs[val];
+            }
+        } else {
+            element[val] = attrs[val];
+        }
+    }
+
+    return element;
+}
 
 function clearCanvas (ctx) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
 function drawCursor (x, y, weight, radius, ctx) {
-    //console.log(x, y, weight, radius, canvas);
-
     ctx.beginPath();
     ctx.strokeStyle = 'cyan';
     ctx.lineWidth = 1 * weight;
@@ -96,6 +113,7 @@ function cloneNode (node) {
         return {
             key: node.key,
             degree: node.degree,
+            color: node.color,
             x: node.x,
             y: node.y,
             type: 'Binomial'
@@ -193,4 +211,113 @@ function drawNode (node, size, ctx) {
     if (text === Number.NEGATIVE_INFINITY)
         text = '-Inf';
     ctx.fillText(text, x, y, size * 0.8);
+}
+
+function distance (x0, y0, x1, y1) {
+    return Math.sqrt((x1 - x0)**2 + (y1 - y0)**2);
+}
+
+function select (ctx, cursorSize, ...targets) {
+    targets = targets.map(target => {return {x: target.x, y: target.y}});
+    
+    return (progress) => {
+        clearCanvas(ctx);
+        // highlight the nodes
+        let weight = 3 + 2 * Math.sin(progress * 2 * Math.PI);
+        targets.forEach(target => {
+            drawCursor(target.x, target.y, weight, cursorSize, ctx);
+        });
+    }
+}
+
+function moveCursor (x0, y0, x1, y1, cursorSize, ctx) {
+    return (progress) => {
+        let x = x0 + (x1 - x0) * progress;
+        let y = y0 + (y1 - y0) * progress;
+        drawCursor(x, y, 3, cursorSize, ctx);
+    }
+}
+
+function moveTree (root, x, y, nodeSize, ctx) {
+    let _root = cloneTree(root);
+
+    let dx = x - _root.x;
+    let dy = y - _root.y;
+
+    return (progress) => {
+        ctx.save();
+        ctx.translate(dx * progress, dy * progress);
+        drawTree(_root, nodeSize, ctx);
+        ctx.restore();
+    }
+}
+
+function interpolateTrees (init, dest, nodeSize, ctx) {
+    let nodes = [];
+
+    let visit = (a, b) => {
+        if (!a) return;
+
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+
+        if (dx != 0 || dy != 0) {
+            nodes.push({node: a, x: a.x, y: a.y, dx: dx, dy: dy});
+        }
+
+        switch (a.type) {
+        case 'Binomial':
+            visit(a.child, b.child);
+            visit(a.sibling, b.sibling);
+            break;
+        case 'Binary':
+        default:
+            visit(a.left, b.left);
+            visit(a.right, b.right);
+        }
+    }
+
+    visit(init, dest);
+
+    return (progress) => {
+        nodes.forEach(arg => {
+            arg.node.x = arg.x + arg.dx * progress;
+            arg.node.y = arg.y + arg.dy * progress;
+        });
+        drawTree(init, nodeSize, ctx);
+    }
+}
+
+function moveNode(node, nodeSize, x, y, ctx) {
+    let _node = cloneNode(node);
+
+    let x0 = _node.x;
+    let y0 = _node.y;
+
+    return (progress) => {
+        _node.x = x0 + (x - x0) * progress;
+        _node.y = y0 + (y - y0) * progress;
+
+        drawNode(_node, nodeSize, ctx);
+    }
+}
+
+function swapNodes (nodeA, nodeB, nodeSize, ctx) {
+    let a = cloneNode(nodeA);
+    let b = cloneNode(nodeB);
+
+    let ax = a.x;
+    let ay = a.y;
+    let bx = b.x;
+    let by = b.y;
+
+    return (progress) => {
+        a.x = ax + (bx - ax) * progress;
+        a.y = ay + (by - ay) * progress;
+        b.x = bx + (ax - bx) * progress;
+        b.y = by + (ay - by) * progress;
+
+        drawNode(a, nodeSize, ctx);
+        drawNode(b, nodeSize, ctx);
+    }
 }

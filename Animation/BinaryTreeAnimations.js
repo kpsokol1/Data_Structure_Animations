@@ -1,18 +1,18 @@
-Visual.Tree.Binary = (ctx) => 
+TreeAnims.Binary = (canvas) =>
 {
     const MARGIN_TOP = 30;
     const MARGIN_LEFT = 50;
     const MAX_ROWS = 8;
-    const SCREEN_HEIGHT = 500;
+    const SCREEN_HEIGHT = 400;
     const SCREEN_WIDTH = 1000;
     const NODE_SIZE = 20;
     const DIFF_Y = SCREEN_HEIGHT / MAX_ROWS;
     const DIFF_X = SCREEN_WIDTH - MARGIN_LEFT * 2;
 
-    ctx.resetTransform();
-    ctx.scale(
-        ctx.canvas.width / SCREEN_WIDTH,
-        ctx.canvas.height / SCREEN_HEIGHT
+    canvas.resetTransform();
+    canvas.scale(
+        canvas.width / SCREEN_WIDTH,
+        canvas.height / SCREEN_HEIGHT
     );
 
     return {
@@ -47,15 +47,15 @@ Visual.Tree.Binary = (ctx) =>
     }
 
     function select (tree, ...nodes) {
-        return Visual.Tree(ctx).select(tree, NODE_SIZE, ...nodes);
+        return TreeAnims(canvas).select(tree, NODE_SIZE, ...nodes);
     }
 
     function moveCursor (tree, a, b) {
-        return Visual.Tree(ctx).moveCursor(tree, a, b, NODE_SIZE);
+        return TreeAnims(canvas).moveCursor(tree, a, b, NODE_SIZE);
     }
 
     function swap (tree, a, b) {
-        return Visual.Tree(ctx).swap(tree, a, b, NODE_SIZE);
+        return TreeAnims(canvas).swap(tree, a, b, NODE_SIZE);
     }
     
     function insert (tree, node) {
@@ -85,19 +85,19 @@ Visual.Tree.Binary = (ctx) =>
         let _root = cloneTree(tree);
     
         let d = Math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2);
-        let duration = () => { return animInterval() * d / 200; };
+        let duration = () => { return canvas.animInterval() * d / 200; };
     
         let draw = (progress) => {
             _node.x = a.x + (b.x - a.x) * progress;
             _node.y = a.y + (b.y - a.y) * progress;
-            clearCanvas(ctx);
-            drawTree(_root, NODE_SIZE, ctx);
-            drawCursor(_node.x, _node.y, 3, NODE_SIZE, ctx);
+            canvas.clear();
+            drawTree(_root, NODE_SIZE, canvas.layer1);
+            drawCursor(_node.x, _node.y, 3, NODE_SIZE, canvas.layer1);
         };
         let after = () => {
-            clearCanvas(ctx);
-            drawTree(_root, NODE_SIZE, ctx);
-            drawTree(_parent, NODE_SIZE, ctx);
+            canvas.clear();
+            drawTree(_root, NODE_SIZE, canvas.layer1);
+            drawTree(_parent, NODE_SIZE, canvas.layer1);
         };
         let before = () =>{};
     
@@ -144,15 +144,15 @@ Visual.Tree.Binary = (ctx) =>
         });
     
         let draw = (progress) => {
-            clearCanvas(ctx);
+            canvas.clear();
             nodes.forEach(node => {
                 node.x = node.oldX + (getPos(node.index).x - node.oldX) * progress;
                 node.y = node.oldY + (getPos(node.index).y - node.oldY) * progress;
             });
-            drawTree(root, NODE_SIZE, ctx);
+            drawTree(root, NODE_SIZE, canvas.layer1);
         }
     
-        return new _Animation(Timing.linear, draw, animInterval);
+        return new _Animation(Timing.linear, draw, canvas.animInterval);
     }
 }
     

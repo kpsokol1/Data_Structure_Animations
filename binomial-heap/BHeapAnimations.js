@@ -1,18 +1,20 @@
-Visual.Tree.Binomial = (ctx) => 
+TreeAnims.Binomial = (canvas) => 
 {
-    const MARGIN_TOP = 50;
+    const MARGIN_TOP = 60;
     const MARGIN_LEFT = 60;
     const NODE_RADIUS = 13;
     const SCREEN_WIDTH = 1000;
-    const SCREEN_HEIGHT = 500;
+    const SCREEN_HEIGHT = 400;
     const MAX_DEGREE = 5;
     const DIFF_X = (SCREEN_WIDTH - 2 * MARGIN_LEFT) / (2 ** MAX_DEGREE - 1);
-    const DIFF_Y = (SCREEN_HEIGHT - 2 * MARGIN_TOP) / (MAX_DEGREE + 1);
+    const DIFF_Y = (SCREEN_HEIGHT - MARGIN_TOP) / (MAX_DEGREE + 1);
 
-    ctx.resetTransform();
-    ctx.scale(
-        ctx.canvas.width / SCREEN_WIDTH,
-        ctx.canvas.height / SCREEN_HEIGHT
+    TreeAnims.Binomial.NODE_RADIUS = NODE_RADIUS;
+
+    canvas.resetTransform();
+    canvas.scale(
+        canvas.width / SCREEN_WIDTH,
+        canvas.height / SCREEN_HEIGHT
     );
 
     return {
@@ -28,15 +30,15 @@ Visual.Tree.Binomial = (ctx) =>
     }
 
     function select (tree, ...nodes) {
-        return Visual.Tree(ctx).select(tree, NODE_RADIUS, ...nodes);
+        return TreeAnims(canvas).select(tree, NODE_RADIUS, ...nodes);
     }
 
     function moveCursor (tree, a, b) {
-        return Visual.Tree(ctx).moveCursor(tree, a, b, NODE_RADIUS);
+        return TreeAnims(canvas).moveCursor(tree, a, b, NODE_RADIUS);
     }
 
     function swap (tree, a, b) {
-        return Visual.Tree(ctx).swap(tree, a, b, NODE_RADIUS);
+        return TreeAnims(canvas).swap(tree, a, b, NODE_RADIUS);
     }
 
     function getChildPos (tree, index) {
@@ -50,16 +52,16 @@ Visual.Tree.Binomial = (ctx) =>
         if (!tree) return;
     
         for (let cur = tree.child; cur; cur = cur.sibling) {
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = 'black';
-            ctx.beginPath();
-            ctx.moveTo(tree.x, tree.y);
-            ctx.lineTo(cur.x, cur.y);
-            ctx.stroke();
+            canvas.layer1.lineWidth = 1;
+            canvas.layer1.strokeStyle = 'black';
+            canvas.layer1.beginPath();
+            canvas.layer1.moveTo(tree.x, tree.y);
+            canvas.layer1.lineTo(cur.x, cur.y);
+            canvas.layer1.stroke();
             drawSubTree(cur);
         }
     
-        drawNode(tree, NODE_RADIUS, ctx);
+        drawNode(tree, NODE_RADIUS, canvas.layer1);
     }
     
     function treeWidth (degree) {
@@ -79,19 +81,19 @@ Visual.Tree.Binomial = (ctx) =>
             let n_dx = MARGIN_LEFT / 2 + DIFF_X;
     
             let draw = (progress) => {
-                clearCanvas(ctx);
+                canvas.clear();
     
-                ctx.save();
-                ctx.translate(r_dx * progress, 0);
-                drawTree(_root, NODE_RADIUS, ctx);
-                ctx.restore();
-                ctx.save();
-                ctx.translate(n_dx * progress, 0);
-                drawNode(_node, NODE_RADIUS, ctx);
-                ctx.restore();
+                canvas.layer1.save();
+                canvas.layer1.translate(r_dx * progress, 0);
+                drawTree(_root, NODE_RADIUS, canvas.layer1);
+                canvas.layer1.restore();
+                canvas.layer1.save();
+                canvas.layer1.translate(n_dx * progress, 0);
+                drawNode(_node, NODE_RADIUS, canvas.layer1);
+                canvas.layer1.restore();
             }
     
-            let shift = new _Animation(Timing.linear, draw, animInterval);
+            let shift = new _Animation(Timing.linear, draw, canvas.animInterval);
     
             return new CompositeAnimation(select(_root, _node), shift);
         }
@@ -104,13 +106,13 @@ Visual.Tree.Binomial = (ctx) =>
         let b = cloneTree(heapB);
     
         let draw = (progress) => {
-            clearCanvas(ctx);
-            drawTree(a, NODE_RADIUS, ctx);
+            canvas.clear();
+            drawTree(a, NODE_RADIUS, canvas.layer1);
     
-            ctx.save();
-            ctx.translate(0, -DIFF_Y * progress);
-            drawTree(b, NODE_RADIUS, ctx);
-            ctx.restore();
+            canvas.layer1.save();
+            canvas.layer1.translate(0, -DIFF_Y * progress);
+            drawTree(b, NODE_RADIUS, canvas.layer1);
+            canvas.layer1.restore();
         }
     
         for (let cur = heapB; cur; cur = cur.sibling) {
@@ -118,7 +120,7 @@ Visual.Tree.Binomial = (ctx) =>
             fixSubTree(cur);
         }
     
-        return new _Animation(Timing.linear, draw, animInterval);
+        return new _Animation(Timing.linear, draw, canvas.animInterval);
     }
     
     function mergeLeft (head, left, right) {
@@ -142,7 +144,7 @@ Visual.Tree.Binomial = (ctx) =>
         let rx = right.x;
     
         let draw = (progress) => {
-            clearCanvas(ctx);
+            canvas.clear();
             
             fixTree(l, lx + l_dx * progress);
             fixSubTree(r, rx + r_dx * progress);
@@ -152,14 +154,16 @@ Visual.Tree.Binomial = (ctx) =>
                 drawSubTree(cur);
                 cur = cur.sibling;
             }
-            drawTree(l, NODE_RADIUS, ctx);
-            drawTree(r, NODE_RADIUS, ctx);
+            drawTree(l, NODE_RADIUS, canvas.layer1);
+            drawTree(r, NODE_RADIUS, canvas.layer1);
         }
     
         fixTree(left, lx + l_dx);
         fixSubTree(right, rx + r_dx);
     
-        let duration = timeByDistance(0, 0, r_dx, 20);
+        let duration = () => {
+            return canvas.animInterval() * distance(0, 0, r_dx, 20) / 200;
+        } 
     
         return new _Animation(Timing.linear, draw, duration);
     }
@@ -188,35 +192,37 @@ Visual.Tree.Binomial = (ctx) =>
         let b_dy = DIFF_Y;
     
         let draw = (progress) => {
-            clearCanvas(ctx);
+            canvas.clear();
     
-            ctx.beginPath();
-            ctx.moveTo(
+            canvas.layer1.beginPath();
+            canvas.layer1.moveTo(
                 b.x + b_dx * progress, 
                 b.y + b_dy * progress);
     
-            ctx.lineTo(a.x + a_dx * progress, a.y);
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            canvas.layer1.lineTo(a.x + a_dx * progress, a.y);
+            canvas.layer1.strokeStyle = 'black';
+            canvas.layer1.lineWidth = 1;
+            canvas.layer1.stroke();
     
-            ctx.save();
-            ctx.translate(
+            canvas.layer1.save();
+            canvas.layer1.translate(
                 b_dx * progress, 
                 b_dy * progress);
             drawSubTree(b);
-            ctx.restore();
+            canvas.layer1.restore();
     
-            ctx.save();
-            ctx.translate(
+            canvas.layer1.save();
+            canvas.layer1.translate(
                 a_dx * progress, 0);
             drawSubTree(a);
-            ctx.restore();
+            canvas.layer1.restore();
     
             rootList.forEach(root => drawSubTree(root));
         }
     
-        let duration = timeByDistance(0, 0, b_dx, b_dy, 100);
+        let duration = () => {
+            return canvas.animInterval() * distance(0, 0, b_dx, b_dy) / 100;
+        }
     
         return new _Animation(Timing.linear, draw, duration);
     }
