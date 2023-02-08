@@ -198,6 +198,11 @@ class RBTree {
             node.parent.setBlack();
             node.getUncle().setBlack();
             node.getGrandparent().setRed();
+
+            this.animQueue.push(
+                TreeAnims.Binary(this.canvas).
+                select(this.root, node.parent, node.getGrandparent(), node.getUncle()));
+
             this.balanceInsert(node.getGrandparent());
         } else {
             if (node == node.parent.right && node.parent == node.getGrandparent().left) {
@@ -209,6 +214,11 @@ class RBTree {
             }
             node.parent.setBlack();
             node.getGrandparent().setRed();
+
+            this.animQueue.push(
+                TreeAnims.Binary(this.canvas).
+                select(this.root, node.parent, node.getGrandparent()));
+
             if (node == node.parent.left) {
                 this.rotateRight(node.getGrandparent());
             } else {
@@ -250,6 +260,12 @@ class RBTree {
 
         let rotate = TreeAnims.Binary(this.canvas).updatePositions(this.root);
         this.animQueue.push(new CompositeAnimation(initial, rotate));
+    }
+    getMin(node) {
+        while (node.left != this.leaf) {
+            node = node.left;
+        }
+        return node;
     }
     deleteNode(key) {
         let forRemove = this.leaf;
@@ -305,69 +321,69 @@ class RBTree {
         }
     }
     balanceDelete(node) {
-        while (node != this.root && node.color == 1) {
+        while (node != this.root && node.color == 'black') {
             if (node == node.parent.left) {
                 let brother = node.parent.right;
 
-                if (brother.color == 0) {
-                    brother.color = 1;
-                    node.parent.color = 0;
+                if (brother.color == 'red') {
+                    brother.color = 'black';
+                    node.parent.color = 'red';
                     this.rotateLeft(node.parent);
                     brother = node.parent.right;
                 }
 
                 if (
-                    brother.left.color == 1 &&
-                    brother.right.color == 1
+                    brother.left.color == 'black' &&
+                    brother.right.color == 'black'
                 ) {
-                    brother.color = 0;
+                    brother.color = 'red';
                     node = node.parent;
                 } else {
-                    if (brother.right.color == 1) {
-                        brother.left.color = 1;
-                        brother.color = 0;
+                    if (brother.right.color == 'black') {
+                        brother.left.color = 'black';
+                        brother.color = 'red';
                         this.rotateRight(brother);
                         brother = node.parent.right;
                     }
 
                     brother.color = node.parent.color;
-                    node.parent.color = 1;
-                    brother.right.color = 1;
+                    node.parent.color = 'black';
+                    brother.right.color = 'black';
                     this.rotateLeft(node.parent);
                     node = this.root;
                 }
             } else {
                 let brother = node.parent.left
-                if (brother.color == 0) {
-                    brother.color = 1;
-                    node.parent.color = 0;
+                if (brother.color == 'red') {
+                    brother.color = 'black';
+                    node.parent.color = 'red';
                     this.rotateRight(node.parent);
                     brother = node.parent.left;
                 }
 
                 if (
-                    brother.left.color == 1 &&
-                    brother.right.color == 1
+                    brother.left.color == 'black' &&
+                    brother.right.color == 'black'
                 ) {
-                    brother.color = 0;
+                    brother.color = 'red';
                     node = node.parent;
                 } else {
-                    if (brother.left.color == 1) {
-                        brother.right.color = 1;
-                        brother.color = 0;
+                    if (brother.left.color == 'black') {
+                        brother.right.color = 'black';
+                        brother.color = 'red';
                         this.rotateLeft(brother);
                         brother = node.parent.left;
                     }
 
                     brother.color = node.parent.color;
-                    node.parent.color = 1;
-                    brother.left.color = 1;
+                    node.parent.color = 'black';
+                    brother.left.color = 'black';
                     this.rotateRight(node.parent);
                     node = this.root;
                 }
             }
         }
 
-        node.color = 1;
+        node.color = 'black';
     }
 }

@@ -20,6 +20,10 @@ return {
                 });
             });
     },
+
+    dropNode: function (tree, node) {
+
+    },
     
     moveCursor: function (tree, nodeA, nodeB, nodeSize) {
         let root = cloneTree(tree);
