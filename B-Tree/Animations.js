@@ -9,7 +9,7 @@ const c = canvas.getContext('2d');
 
 let animationQueue = [];              //queue to hold all the animations
 canvas.width = screen.availWidth;
-canvas.height = screen.availHeight;
+canvas.height = screen.availHeight-150;
 
 let keyWidth = .025 *screen.availWidth;
 let nodeSpacing = 0.01*screen.availWidth
@@ -28,6 +28,7 @@ class Animations {
     let ref = setInterval(() => {
       if (i === animationQueue.length) {
         clearInterval(ref);
+        animationQueue.length = 0;
         return;
       }
       //this.drawTree(tree);
@@ -87,7 +88,8 @@ class Animations {
     }, 10);
   }
 
-  static leftRotate(newTree,root,left,right,root_key,right_key,root_index,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+  static leftRotate(newTree,root,left,right,root_key,right_key,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
     this.drawTree(newTree,[root_key,right_key])
     let root_x = this.#getX(root,root_level,root_index,false,newTree) + keyWidth*root_key_index;
     let root_y = this.#getY(root_level);
@@ -134,7 +136,8 @@ class Animations {
     }, 10);
   }
 
-  static rightRotate(newTree,root,left,right,root_key,left_key,root_index,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+  static rightRotate(newTree,root,left,right,root_key,left_key,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
     this.drawTree(newTree,[root_key,left_key])
     let root_x = this.#getX(root,root_level,root_index,false,newTree) + keyWidth*root_key_index;
     let root_y = this.#getY(root_level);
@@ -181,7 +184,8 @@ class Animations {
     }, 10);
   }
 
-  static highlight(node, level, index, color, colorKey, key,tree,hold) {
+  static highlight(node, level, color, colorKey, key,tree,hold) {
+    let index = this.#getNodesAndKeysBehind(level,node)[1]; //fixme will this always work on a constantly changing tree?
     if(!hold){
       this.drawTree(tree);
     }
@@ -226,7 +230,8 @@ class Animations {
     if (root_level === 0) {
       root_x = root_x - (width / 2);
     }
-    c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+    c.fillStyle = "white";
+    c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
     //animationQueue.push(function() {Animations.highlight(successor,successor_level,successor_index,"red", false,successor.keys[0],tree)});
 
     //move number to the root
@@ -242,7 +247,8 @@ class Animations {
       }
       c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
       this.drawTree(tree);
-      c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+      c.fillStyle = "white";
+      c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
 
       //c.clearRect(successor_x+2,successor_y+2,keyWidth-4,height-4);     //fixme may have to modify this
       currentY -= 1;
@@ -266,7 +272,8 @@ class Animations {
       root_x = root_x - (width / 2);
     }
     //animationQueue.push(function() {Animations.highlight(predecessor,predecessorLevel,,"red", false,key,tempTree)});
-    c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+    c.fillStyle = "white";
+    c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
     //animationQueue.push(function() {Animations.highlight(successor,successor_level,successor_index,"red", false,successor.keys[0],tree)});
 
     //move number to the root
@@ -282,7 +289,8 @@ class Animations {
       }
       c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
       this.drawTree(tree);
-      c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+      c.fillStyle = "white";
+      c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
       //c.clearRect(predecessor_x+2,predecessor_y+2,keyWidth-4,height-4);     //fixme may have to modify this
       currentY -= 1;
       currentX += xIncrement;
@@ -325,7 +333,7 @@ class Animations {
         clearInterval(ref);
         return;
       }
-      this.drawTree(tree,node.keys[index]);
+      this.drawTree(tree,[node.keys[index]]);
       c.fillText(node.keys[index], x_pos + keyWidth / 2,
           y_pos + height / 2);
       y_pos++;
@@ -442,8 +450,13 @@ class Animations {
     if (level === 0) {
       x_pos = x_pos - (width / 2);
     }
+    c.fillStyle = "white";
+    c.strokeStyle = "black";
+    c.lineWidth = 2;
+    c.fillRect(x_pos, y_pos, width, height);
     c.strokeRect(x_pos, y_pos, width, height);
     this.#setFont();
+    c.fillStyle = "black";
     for (let i = 0; i < node.keys.length; i++) {
       c.textAlign = "center";
       if(excludedKey === null || !excludedKey.includes(node.keys[i])){

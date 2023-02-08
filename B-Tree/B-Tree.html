@@ -8,12 +8,34 @@
       width:  100%;
       height: 100%;
       margin: 0;
+      background-color:hsl(120, 60%, 30%);
     }
   </style>
 </head>
 <body>
+<button id="run" onclick="controller.toggleRun()">run >></button>
+<button id="prev" onclick="controller.stepBack()">prev &lt</button>
+<button id="next" onclick="controller.stepForward()">next ></button>
+progress: <input type="range" id="progress" class="playBackSlider" oninput="controller.inputSlider()" onmouseup="controller.setSlider()"></input>
+<br>
+speed: <input type="range" id="speed" min="200" max="2000" step="200"></input>
+<br>
+
+
+<select id="operation">
+  <option value="insert">Insert</option>
+  <option value="delete">Delete</option>
+  <option value="find">Find</option>
+</select>
+
+<input id="operand" type="text" size="4"/>
+<input type="submit" value="Submit" onclick="run(
+        document.getElementById('operation').value,
+        parseInt(document.getElementById('operand').value))"/>
+<br>
 <canvas id="b_tree_canvas" width="1920" height="1080"></canvas>
 </body>
+<script type="text/javascript" src="../Animation/Controller.js"></script>
 <script type="text/javascript" src="Animations.js"></script>
 <script type="text/javascript" src="B-Tree.js"></script>
 </html>
