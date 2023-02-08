@@ -25,14 +25,14 @@ let emptyIndex;
 class Animations {
   static runQueue(pauseTime) {
     let i = 0;
-    let ref = setInterval(() => {
+    let ref = setInterval(async() => {
       if (i === animationQueue.length) {
         clearInterval(ref);
         animationQueue.length = 0;
         return;
       }
       //this.drawTree(tree);
-      animationQueue[i]();
+      await animationQueue[i]();
       i++;
     }, pauseTime);
   }
@@ -86,6 +86,119 @@ class Animations {
       c.fillStyle = "red"
       c.fillText(root_key,currentX+keyWidth/2,currentY+keyWidth/2);
     }, 10);
+  }
+
+  static splitChildNode(newTree, oldTree, oldRoot, newRoot, oldLevel, newLevel,oldKeyIndex,newKeyIndex,key){
+    let oldIndex = this.#getNodesAndKeysBehind(oldLevel,oldRoot)[1]; //fixme will this always work on a constantly changing tree?
+    let newIndex = this.#getNodesAndKeysBehind(newLevel,newRoot)[1]; //fixme will this always work on a constantly changing tree?
+    let old_x = this.#getX(oldRoot,oldLevel,oldIndex,false,oldTree) + keyWidth * oldKeyIndex;
+    let old_y = this.#getY(oldLevel);
+    let new_x = this.#getX(newRoot, newLevel,newIndex,false,newTree) + keyWidth * newKeyIndex;
+    let new_y = this.#getY(newLevel);
+
+    let width = newRoot.keys.length * keyWidth;
+    let height = 40;
+    if (newLevel === 0) {
+      new_x = new_x - (width / 2);
+    }
+
+    let xDistance = new_x-old_x;
+    let yDistance = new_y-old_y;
+    let xIncrement = xDistance/Math.abs(yDistance);
+    let currentY = old_y;
+    let currentX = old_x;
+
+    let ref = setInterval(() => {
+      if (currentY <= new_y) {
+        clearInterval(ref);
+        this.drawTree(newTree);
+        return;
+      }
+      c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      this.drawTree(newTree,[key]);
+      currentY -= 1;
+      currentX += xIncrement;
+      c.textAlign = "center"
+      c.fillStyle = "red"
+      c.fillText(key,currentX+keyWidth/2,currentY+keyWidth/2);
+    }, 10);
+  }
+
+  static async splitRoot(oldTree,root,leftCutoff,rightCutoff){
+    //move whole canvas down
+    return new Promise((resolve) => {
+      let originalY = this.#getY(0);
+      let y = this.#getY(0);
+      let ref = setInterval(async() => {
+        //c.clearRect(canvas.width/2-2,0,4,120);
+        if (y >= this.#getY(1)) {
+          clearInterval(ref);
+
+          //put lines around t
+          let x_pos = this.#getX(root, 0, 0, false,oldTree);
+          let y_pos = this.#getY(0);
+          let width = root.keys.length * keyWidth;
+          let height = 40;
+          x_pos = x_pos - (width / 2);
+
+          c.strokeStyle = "black"
+          c.stroke();
+          //push root up
+         // this.#extracted(oldTree, x_pos, leftCutoff, y_pos, height, rightCutoff, root);
+          resolve();
+          return;
+        }
+        c.clearRect(0, 0, canvas.width, canvas.height);
+        this.drawTree(oldTree);
+        c.clearRect(canvas.width/2-2,0,20,originalY-1);
+        c.translate(0,1);
+        y++;
+      }, 10);
+    });
+  }
+
+  static async extracted(oldTree, leftCutoff, rightCutoff,
+      root,key) {
+    return new Promise((resolve) => {
+      let width = root.keys.length * keyWidth;
+      let x_pos = this.#getX(root, 0, 0, false,oldTree);
+      x_pos = x_pos - (width / 2);
+      let y_pos = this.#getY(0);
+      let height = 40;
+      let goalY = this.#getY(-1);
+      let currentY = this.#getY(0);
+      let ref2 = setInterval(async () => {
+        if (currentY <= goalY) {
+          clearInterval(ref2);
+          c.translate(0, this.#getY(0) - this.#getY(1));
+          resolve();
+          return;
+        }
+        c.lineWidth = 2;
+        this.drawTree(oldTree,key);
+        c.clearRect(x_pos + leftCutoff * keyWidth, this.#getY(0) - 2, keyWidth,
+            height + 4);
+        c.beginPath();
+        c.moveTo(x_pos + leftCutoff * keyWidth, y_pos);
+        c.lineTo(x_pos + leftCutoff * keyWidth, y_pos + height);
+        c.strokeStyle = "black"
+        c.stroke();
+        c.beginPath();
+        c.moveTo(x_pos + rightCutoff * keyWidth, y_pos);
+        c.lineTo(x_pos + rightCutoff * keyWidth, y_pos + height);
+        c.strokeStyle = "black"
+        c.stroke();
+        currentY--;
+        c.fillStyle = "white";
+        c.fillRect(x_pos + leftCutoff * keyWidth, currentY, keyWidth, height);  //fixme will we always be taking 1 node up?
+        c.strokeRect(x_pos + leftCutoff * keyWidth, currentY, keyWidth, height)
+        c.textAlign = "center";
+        c.fillStyle = "black";
+        c.fillText(root.keys[root.t - 1],
+            x_pos + leftCutoff * keyWidth + keyWidth / 2,
+            currentY + height / 2);
+      }, 10);
+    });
   }
 
   static leftRotate(newTree,root,left,right,root_key,right_key,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
@@ -303,6 +416,9 @@ class Animations {
 
   static drawTree(tree,_excludeKey = null,ignoreRoot = false,_emptyLevel = -1, _emptyIndex = -1) {
     excludedKey = _excludeKey;
+    if(_excludeKey === [0]){
+      let hi = 6;
+    }
     emptyLevel = _emptyLevel;
     emptyIndex = _emptyIndex;
       c.clearRect(0, 0, canvas.width, canvas.height);

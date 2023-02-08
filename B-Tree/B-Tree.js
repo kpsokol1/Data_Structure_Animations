@@ -11,16 +11,19 @@ class BTree{
     let r = this.root;
 
     if(r.keys.length ===  this.maxKeys){                    //check if the root is already full, if so, we must do a premptive split on the way down
+      let tempNode = JSON.parse(JSON.stringify(r));
+      let tempTree = JSON.parse(JSON.stringify(b_tree));
+      animationQueue.push(function() {Animations.highlight(tempNode,0,"red", true,key,tempTree,false)});
       let s = new Node(this.t);                                 // create a new node for our new root
       this.root = s;                                            //assign the new root because we are splitting the root and increasing the height of the tree by 1
       s.isLeaf = false;                                         //since this is the root, it is not a leaf
       s.childNodes.push(r);                                     //make the old root, s (new root) leftmost child
-      s.splitChild(0);                                 //split the old root, which is s's new child
-      s.insertNonFull(key);                                    //root was split, now try to insert the key
+      s.splitChild(0,0,tempTree,tempNode,true);                                 //split the old root, which is s's new child
+      s.insertNonFull(key,0);                                    //root was split, now try to insert the key
       this.height++;
     }
     else{
-      r.insertNonFull(key);                                    //the root did not need to be split, try to insert the key
+      r.insertNonFull(key,0);                                    //the root did not need to be split, try to insert the key
     }
     let tempTree = JSON.parse(JSON.stringify(b_tree));
     animationQueue.push(function() {Animations.drawTree(tempTree)});
@@ -47,11 +50,13 @@ class Node {
   }
 
   //splits a child by making a left and a right node. Puts the median of the left and right into the parent
-  splitChild(childIndex){
+  splitChild(childIndex,level,tree,root,isRoot){
+    let leftCutoff = this.t - 1;
+    let rightCutoff = this.t;
     let right = new Node(this.t)                               //make a new node to hold the right side of the node to be split //fixme does it need to be left.t?
     let left = this.childNodes[childIndex]                     //initially set the left side to be the entire node to be split
     right.isLeaf = left.isLeaf                                //if the left child was a leaf, that means the new right node must be a leaf
-
+    let oldRootCopy = JSON.parse(JSON.stringify(left));
     //move the keys from left to right child
     for(let j = this.t; j < left.keys.length; j++){              //we split the child in half at the mid-point index (t-1), left side might be bigger
       right.keys.push(left.keys[j]);                          //assign the rightmost keys of the left child to the right child
@@ -79,21 +84,39 @@ class Node {
       this.keys[j+1] = this.keys[j]          ;                             //move all keys to the right, including i
     }
     this.keys[childIndex] = left.keys[left.keys.length-1]  ;               //slot the new median key (rightmost index of left array) into the new parent array
-
+    let key = left.keys[left.keys.length-1];
     left.keys.length = left.keys.length - 1;                                        //get rid of the median from the end of the left node
+    let newRootCopy = JSON.parse(JSON.stringify(this));
+    let tempTree_2 = JSON.parse(JSON.stringify(b_tree));
+    if(isRoot){
+      animationQueue.push(function() {Animations.splitRoot(tree,root,leftCutoff,rightCutoff)});
+      animationQueue.push(function() {Animations.extracted(tree,leftCutoff,rightCutoff,root,[key])});
+      animationQueue.push(function() {Animations.drawTree(tempTree_2)});
+    }
+    else{
+      let oldKeyIndex = this.t-1;
+      animationQueue.push(function() {Animations.splitChildNode(tempTree_2,tree,oldRootCopy,newRootCopy,level,level-1,oldKeyIndex,childIndex,key)});
+    }
   }
 
   //resursively inserts a node into the tree
-  insertNonFull(key){
+  insertNonFull(key,level){
     let i = this.keys.length - 1;                                          //the last index in the keys list
-
     //case 1: we are at a leaf (we always insert new items at the leaves)
+    let tempNode = JSON.parse(JSON.stringify(this));
+    let tempTree = JSON.parse(JSON.stringify(b_tree));
+    if(level > 0 || this.keys.length > 0){
+      animationQueue.push(function() {Animations.highlight(tempNode,level,"red", true,key,tempTree,false)});
+    }
     if(this.isLeaf){
+
       while(i >= 0 && key < this.keys[i]){                                //shift all keys greater than the new key to the right to leave an open spot for the new key
         this.keys[i+1] = this.keys[i];
         i--;
       }
       this.keys[i+1] = key;                                               //insert the new key
+      let tempTree2 = JSON.parse(JSON.stringify(b_tree));
+      animationQueue.push(function() {Animations.drawTree(tempTree2)});
     }
     //case 2: we are not at a leaf
     else{
@@ -102,12 +125,12 @@ class Node {
       }
       i++;                                                                //we decremented before exiting the loop, so re increment to get the right value
       if(this.childNodes[i].keys.length === 2*this.t-1){                  //see if the child we want to insert the new key into is full
-        this.splitChild(i);                                               //split the child
+        this.splitChild(i,level+1,tempTree,tempNode,false);                                               //split the child
         if(key > this.keys[i]){                                           //determine if we need to recurse on the new left or right child (keys[i] is the new median of the children)
           i++;
         }
       }
-      this.childNodes[i].insertNonFull(key)                                  //recursively insert key into children until we hit a leaf
+      this.childNodes[i].insertNonFull(key,level+1)                                  //recursively insert key into children until we hit a leaf
     }
   }
 
