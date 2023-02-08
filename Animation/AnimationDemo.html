@@ -5,44 +5,19 @@
 
 <script type="text/javascript" src="Common.js"></script>
 <script type="text/javascript" src="Animation.js"></script>
-<script type="text/javascript" src="VisualTree.js"></script>
-<script type="text/javascript" src="VisualBinaryTree.js"></script>
+<script type="text/javascript" src="TreeAnimations.js"></script>
+<script type="text/javascript" src="BinaryTreeAnimations.js"></script>
 <script type="text/javascript" src="BinaryTree.js"></script>
 <script type="text/javascript" src="Controller.js"></script>
-<script type="text/javascript" src="AnimationDemo.js"></script>
 
-<style>
-    canvas {
-        background-color:hsl(120, 60%, 30%);
+<script>
+    window.onload = function() {
+        new Controller(BinaryTree, 'Binary Tree');
+        new Controller(BinaryTree, 'Binary Tree');
+        new Controller(BinaryTree, 'Binary Tree');
     }
-    .playBackSlider {
-        width: 50%;
-    }
-</style>
+</script>
 
-<body>
-    
-    <button id="run" onclick="controller.toggleRun()">run >></button>
-    <button id="prev" onclick="controller.stepBack()">prev &lt</button>
-    <button id="next" onclick="controller.stepForward()">next ></button>
-    progress: <input type="range" id="progress" class="playBackSlider" 
-        oninput="controller.inputSlider()" onmouseup="controller.setSlider()"></input>
-    <br>
-    speed: <input type="range" id="speed" min="200" max="2000" step="200"></input>
-    <br>
+<body></body>
 
-    <select id="operation">
-        <option value="insert">Insert</option>
-        <option value="delete">Delete</option>
-        <option value="find">Find</option>
-    </select>
-
-    <input id="operand" type="text" size="4"/>
-    <input type="submit" value="Submit" onclick="controller.execute(
-        document.getElementById('operation').value,
-        document.getElementById('operand').value)"/>
-
-    <canvas id="canvas" width="1280" height="720"></canvas>
-
-</body>
 </html>
