@@ -45,9 +45,9 @@ function clearCanvas (ctx) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
-function drawCursor (x, y, weight, radius, ctx) {
+function drawCursor (x, y, weight, radius, ctx, color='cyan') {
     ctx.beginPath();
-    ctx.strokeStyle = 'cyan';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1 * weight;
     ctx.arc(x, y, radius, 0, Math.PI * 2, true);
     ctx.stroke();
@@ -192,6 +192,8 @@ function flattenTree (tree) {
 }
 
 function drawNode (node, size, ctx) {
+    if (!node) return;
+
     let x = node.x + (node.offsetX ? node.offsetX : 0);
     let y = node.y + (node.offsetY ? node.offsetY : 0);
 
@@ -221,15 +223,15 @@ function distance (x0, y0, x1, y1) {
     return Math.sqrt((x1 - x0)**2 + (y1 - y0)**2);
 }
 
-function select (ctx, cursorSize, ...targets) {
-    targets = targets.map(target => {return {x: target.x, y: target.y}});
+function select (ctx, cursorSize, color='cyan', ...targets) {
+    targets = targets.map(target => {return target ? {x: target.x, y: target.y} : null});
     
     return (progress) => {
         clearCanvas(ctx);
         // highlight the nodes
         let weight = 3 + 2 * Math.sin(progress * 2 * Math.PI);
         targets.forEach(target => {
-            drawCursor(target.x, target.y, weight, cursorSize, ctx);
+            target ? drawCursor(target.x, target.y, weight, cursorSize, ctx, color) : 0;
         });
     }
 }

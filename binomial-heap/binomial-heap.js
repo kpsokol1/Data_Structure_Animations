@@ -236,9 +236,41 @@ BinomialHeap.prototype.removeTreeRoot = function (heap, root, prev) {
         child = next;
     }
 
+    let _heap = cloneTree(heap.head);
+    let _root = cloneNode(root);
+    let _newHead = cloneTree(newhead);
+    let y0 = root.y
+    let M = this.canvas.layer0.getTransform();
+    let dy = (this.canvas.height / M.m22 - 50 - y0);
+    let bounce = new _Animation(Timing.makeEaseOut(Timing.bounce),
+        (t) => {
+            clearCanvas(this.canvas.layer1);
+            _root.y = y0 + dy * t;
+            drawNode(_root, NODE_RADIUS, this.canvas.layer1);
+        }, () => {return this.canvas.animInterval() * dy / 100},
+        () => {
+            this.canvas.clear();
+            drawTree(_heap, NODE_RADIUS, this.canvas.layer0);
+            drawTree(_newHead, NODE_RADIUS, this.canvas.layer0);
+        });
+    
+    let fall = new _Animation(Timing.quad,
+        (t) => {
+            clearCanvas(this.canvas.layer1);
+            _root.y = (y0 + dy) + t * (50 + NODE_RADIUS);
+            drawNode(_root, NODE_RADIUS, this.canvas.layer1);
+        }, () => {return this.canvas.animInterval() / 4},
+        () => {
+            this.canvas.clear();
+            drawTree(_heap, NODE_RADIUS, this.canvas.layer0);
+            drawTree(_newHead, NODE_RADIUS, this.canvas.layer0);
+        });
+
     this.animQueue.push(
-        TreeAnims.Binomial(this.canvas).mergeUp(heap.head, newhead)
-    );
+        new CompositeAnimation(bounce, fall));
+
+    this.animQueue.push(
+        TreeAnims.Binomial(this.canvas).mergeUp(heap.head, newhead));
 
     let init = cloneTree(newhead);
     TreeAnims.Binomial(this.canvas).fixTree(newhead, prev?.x);
@@ -320,7 +352,7 @@ BinomialHeap.prototype.decreaseKey = function (node, key) {
     var cur = node;
     var par = cur.parent;
 
-    let _select = select(this.layer1, NODE_RADIUS, node);
+    let _select = select(this.layer1, NODE_RADIUS, 'cyan', node);
     let head = cloneTree(this.head);
 
     this.animQueue.push(
@@ -364,20 +396,6 @@ function find (head, key) {
 }
 
 BinomialHeap.prototype.find = function (key) {
-    let _select = select(this.layer1, NODE_RADIUS, this.head);
-    let head = cloneTree(this.head);
-
-    this.animQueue.push(
-        new _Animation(Timing.linear, 
-            (t) => {
-                clearCanvas(this.layer1);
-                _select(t);
-            }, this.canvas.animInterval,
-            () => {
-                this.canvas.clear();
-                drawTree(head, NODE_RADIUS, this.layer0);
-    }));
-
     return this.recursiveFind(this.head, key);
 }
 
@@ -415,17 +433,14 @@ BinomialHeap.prototype.delete = function (key) {
 
     TreeAnims.Binomial(this.canvas).fixTree(this.head);
 
-    let _select = select(this.layer1, NODE_RADIUS, this.head);
     let head = cloneTree(this.head);
 
     this.animQueue.push(
         new _Animation(Timing.linear, 
-            (t) => {
-                clearCanvas(this.layer1);
-                _select(t);
-            }, this.canvas.animInterval,
+            () => {}, 
+            this.canvas.animInterval,
             () => {
-                clearCanvas(this.layer0);
+                this.canvas.clear();
                 drawTree(head, NODE_RADIUS, this.layer0);
             }));
 

@@ -15,14 +15,6 @@ TreeAnims.Binary = (canvas) =>
         canvas.height / SCREEN_HEIGHT
     );
 
-    return {
-        insert:             insert,
-        updatePositions:    updatePositions,
-        select:             select,
-        moveCursor:         moveCursor,
-        swap:               swap,
-    }
-
     /**Get the heap index of the left child */
     function leftNdx(index) {
         return index * 2 + 1;
@@ -46,33 +38,41 @@ TreeAnims.Binary = (canvas) =>
         }
     }
 
-    function select (tree, ...nodes) {
-        return TreeAnims(canvas).select(tree, NODE_SIZE, ...nodes);
-    }
+return {
 
-    function moveCursor (tree, a, b) {
+    dropNode: function (tree, node) {
+        return TreeAnims(canvas).dropNode(tree, node, NODE_SIZE);
+    },
+
+    select: function (tree, color, ...nodes) {
+        return TreeAnims(canvas).select(tree, NODE_SIZE, color, ...nodes);
+    },
+
+    moveCursor: function (tree, a, b) {
         return TreeAnims(canvas).moveCursor(tree, a, b, NODE_SIZE);
-    }
+    },
 
-    function swap (tree, a, b) {
+    swap: function (tree, a, b) {
         return TreeAnims(canvas).swap(tree, a, b, NODE_SIZE);
-    }
+    },
     
-    function insert (tree, node) {
+    insert: function (tree, node) {
         node.index = 0;
         node.x = getPos(0).x;
         node.y = getPos(0).y;
 
-        if (!tree) 
-            return select(tree, node);
+        if (!tree || tree.isLeaf)
+            return this.select(tree, 'yellow', node);
     
         let _parent = cloneNode(node.parent);
+        let _node = cloneNode(node);
+        let _root = cloneTree(tree);
     
         if (node.key < _parent.key) {
-            _parent.left = node;
+            _parent.left = _node;
             node.index = leftNdx(_parent.index);
         } else {
-            _parent.right = node;
+            _parent.right = _node;
             node.index = rightNdx(_parent.index);
         }
         let a = getPos(_parent.index);
@@ -81,34 +81,40 @@ TreeAnims.Binary = (canvas) =>
         node.x = b.x;
         node.y = b.y;
     
-        let _node = cloneNode(node);
-        let _root = cloneTree(tree);
-    
         let d = Math.sqrt((b.x - a.x)**2 + (b.y - a.y)**2);
         let duration = () => { return canvas.animInterval() * d / 200; };
     
         let draw = (progress) => {
             _node.x = a.x + (b.x - a.x) * progress;
             _node.y = a.y + (b.y - a.y) * progress;
-            canvas.clear();
-            drawTree(_root, NODE_SIZE, canvas.layer1);
-            drawCursor(_node.x, _node.y, 3, NODE_SIZE, canvas.layer1);
-        };
-        let after = () => {
-            canvas.clear();
-            drawTree(_root, NODE_SIZE, canvas.layer1);
-            drawTree(_parent, NODE_SIZE, canvas.layer1);
-        };
-        let before = () =>{};
-    
-        let initial = select(tree, node.parent);
 
-        let push = new _Animation(Timing.linear, draw, duration, before, after);
+            clearCanvas(canvas.layer1);
+            drawCursor(_node.x, _node.y, 3, NODE_SIZE, canvas.layer1, 'yellow');
+        };
+        let before = () =>{
+            canvas.clear();
+            drawTree(_root, NODE_SIZE, canvas.layer0);
+        };
     
-        return new CompositeAnimation(initial, push);
-    }
+        let initial = this.select(tree, 'cyan', node.parent);
+
+        let push = new _Animation(Timing.linear, draw, duration, before);
+
+        let final = new _Animation(Timing.linear,
+            (t) => {
+                clearCanvas(canvas.layer1);
+                select(canvas.layer1, NODE_SIZE, 'yellow', {x: b.x, y: b.y})(t);
+            }, canvas.animInterval,
+            () => {
+                canvas.clear();
+                drawTree(_root, NODE_SIZE, canvas.layer0);
+                drawTree(_parent, NODE_SIZE, canvas.layer0);
+            });
     
-    function reIndex(node) {
+        return new CompositeAnimation(initial, push, final);
+    },
+    
+    reIndex: function (node) {
         if (!node) return;
     
         if (!node.parent) {
@@ -119,12 +125,12 @@ TreeAnims.Binary = (canvas) =>
             node.index = leftNdx(node.parent.index);
         }
     
-        reIndex(node.left);
-        reIndex(node.right);
-    }
+        this.reIndex(node.left);
+        this.reIndex(node.right);
+    },
     
-    function updatePositions (tree) {
-        reIndex(tree);
+    updatePositions: function (tree) {
+        this.reIndex(tree);
     
         let root = cloneTree(tree);
         let nodes = flattenTree(root);
@@ -154,6 +160,7 @@ TreeAnims.Binary = (canvas) =>
     
         return new _Animation(Timing.linear, draw, canvas.animInterval);
     }
+}
 }
     
     

@@ -214,6 +214,12 @@ class RBTree {
         node.linkLeft(left.right);
         left.linkRight(node);
     }
+    getMin(node) {
+        while (node.left != this.leaf) {
+            node = node.left;
+        }
+        return node;
+    }
     deleteNode(key) {
         let forRemove = this.leaf;
         let tmp = this.root;

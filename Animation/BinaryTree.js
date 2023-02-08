@@ -49,7 +49,7 @@ BinaryTree.prototype.insert = function (key) {
 }
 
 BinaryTree.prototype.rotateRight = function (pivot) {
-    let initial = TreeAnims.Binary(this.canvas).select(this.root, pivot);
+    let initial = TreeAnims.Binary(this.canvas).select(this.root, 'magenta', pivot);
 
     let left = pivot.left;
 
@@ -75,7 +75,7 @@ BinaryTree.prototype.rotateRight = function (pivot) {
 }
 
 BinaryTree.prototype.rotateLeft = function (pivot) {
-    let initial = TreeAnims.Binary(this.canvas).select(this.root, pivot);
+    let initial = TreeAnims.Binary(this.canvas).select(this.root, 'magenta', pivot);
 
     let right = pivot.right;
 

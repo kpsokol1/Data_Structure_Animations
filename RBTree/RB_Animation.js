@@ -135,12 +135,24 @@ class RBTree {
         this.canvas = controller.canvas;
         this.animQueue = [];
     }
-    get(key) {
+    find(key) {
         let node = this.root;
         while (node != null) {
-            if (key < node.key) node = node.left;
-            else if (key > node.key) node = node.right;
-            else return node;
+            if (key < node.key) {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.left));
+                node = node.left;
+            }
+            else if (key > node.key) {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.right));
+                node = node.right;
+            } 
+            else {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node));
+                return node;
+            }
         }
         return null;
     }
@@ -153,7 +165,7 @@ class RBTree {
         return node;
     }
     insertNode(node) {
-        if (this.root == null) {
+        if (this.root == null || this.root.isLeaf) {
             node.setBlack();
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).insert(this.root, node));
@@ -192,6 +204,8 @@ class RBTree {
     balanceInsert(node) {
         if (node.parent == null) {
             node.setBlack();
+            this.animQueue.push(
+                TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node));
         } else if (node.parent.isBlack()) {
             return;
         } else if (node.getUncle().isRed()) {
@@ -201,7 +215,7 @@ class RBTree {
 
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).
-                select(this.root, node.parent, node.getGrandparent(), node.getUncle()));
+                select(this.root, 'cyan', node.parent, node.getGrandparent(), node.getUncle()));
 
             this.balanceInsert(node.getGrandparent());
         } else {
@@ -217,7 +231,7 @@ class RBTree {
 
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).
-                select(this.root, node.parent, node.getGrandparent()));
+                select(this.root, 'cyan', node.parent, node.getGrandparent()));
 
             if (node == node.parent.left) {
                 this.rotateRight(node.getGrandparent());
@@ -237,10 +251,9 @@ class RBTree {
             }
         }
         newNode.parent = oldNode.parent;
-        
     }
     rotateLeft(node) {
-        let initial = TreeAnims.Binary(this.canvas).select(this.root, node);
+        let initial = TreeAnims.Binary(this.canvas).select(this.root, 'magenta', node);
 
         let right = node.right;
         this.replaceNode(node, right);
@@ -251,7 +264,7 @@ class RBTree {
         this.animQueue.push(new CompositeAnimation(initial, rotate));
     }
     rotateRight(node) {
-        let initial = TreeAnims.Binary(this.canvas).select(this.root, node);
+        let initial = TreeAnims.Binary(this.canvas).select(this.root, 'magenta', node);
 
         let left = node.left;
         this.replaceNode(node, left);
@@ -263,26 +276,38 @@ class RBTree {
     }
     getMin(node) {
         while (node.left != this.leaf) {
+            this.animQueue.push(
+                TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.left));
             node = node.left;
         }
+        this.animQueue.push(
+            TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node));
         return node;
     }
-    deleteNode(key) {
+    delete(key) {
         let forRemove = this.leaf;
         let tmp = this.root;
 
         while (tmp != this.leaf) {
             if (tmp.key === key) {
                 forRemove = tmp;
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove));
                 break;
             }
 
             if (tmp.key > key) {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.left));
                 tmp = tmp.left;
             } else {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.right));
                 tmp = tmp.right;
             }
         }
+
+        if (tmp.isLeaf) return;     // Avoid crashing when the key is not in the tree.
 
         let minRight = forRemove;
         let minRightColor = minRight.color;
@@ -290,10 +315,16 @@ class RBTree {
 
         if (forRemove.left == this.leaf) {
             newMinRight = forRemove.right;
+            if (!forRemove.right.isLeaf) {
+                this.animQueue.push(
+                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.right));
+            }
             this.replaceNode(forRemove, forRemove.right);
         }
         else if (forRemove.right == this.leaf) {
             newMinRight = forRemove.left;
+            this.animQueue.push(
+                TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.left));
             this.replaceNode(forRemove, forRemove.left);
         }
         else {
@@ -316,7 +347,13 @@ class RBTree {
             minRight.color = forRemove.color;
         }
 
-        if (minRightColor == 1) {
+        this.animQueue.push(
+            TreeAnims.Binary(this.canvas).dropNode(this.root, forRemove));
+
+        this.animQueue.push(
+            TreeAnims.Binary(this.canvas).updatePositions(this.root));
+
+        if (minRightColor == 'black') {
             this.balanceDelete(newMinRight);
         }
     }
@@ -328,6 +365,8 @@ class RBTree {
                 if (brother.color == 'red') {
                     brother.color = 'black';
                     node.parent.color = 'red';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent));
                     this.rotateLeft(node.parent);
                     brother = node.parent.right;
                 }
@@ -337,11 +376,15 @@ class RBTree {
                     brother.right.color == 'black'
                 ) {
                     brother.color = 'red';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
                     node = node.parent;
                 } else {
                     if (brother.right.color == 'black') {
                         brother.left.color = 'black';
                         brother.color = 'red';
+                        this.animQueue.push(
+                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.left));
                         this.rotateRight(brother);
                         brother = node.parent.right;
                     }
@@ -349,6 +392,8 @@ class RBTree {
                     brother.color = node.parent.color;
                     node.parent.color = 'black';
                     brother.right.color = 'black';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.right, node.parent));
                     this.rotateLeft(node.parent);
                     node = this.root;
                 }
@@ -357,6 +402,8 @@ class RBTree {
                 if (brother.color == 'red') {
                     brother.color = 'black';
                     node.parent.color = 'red';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent));
                     this.rotateRight(node.parent);
                     brother = node.parent.left;
                 }
@@ -366,11 +413,15 @@ class RBTree {
                     brother.right.color == 'black'
                 ) {
                     brother.color = 'red';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
                     node = node.parent;
                 } else {
                     if (brother.left.color == 'black') {
                         brother.right.color = 'black';
                         brother.color = 'red';
+                        this.animQueue.push(
+                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
                         this.rotateLeft(brother);
                         brother = node.parent.left;
                     }
@@ -378,6 +429,8 @@ class RBTree {
                     brother.color = node.parent.color;
                     node.parent.color = 'black';
                     brother.left.color = 'black';
+                    this.animQueue.push(
+                        TreeAnims.Binary(this.canvas).select(this.root, brother, 'cyan', node.parent, brother.left));
                     this.rotateRight(node.parent);
                     node = this.root;
                 }
@@ -385,5 +438,7 @@ class RBTree {
         }
 
         node.color = 'black';
+        this.animQueue.push(
+            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node));
     }
 }

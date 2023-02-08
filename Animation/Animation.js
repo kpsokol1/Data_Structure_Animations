@@ -15,17 +15,27 @@
  * functions should return a floating-point
  * number between between 0 and 1 inclusive.
  */
+// source: https://javascript.info/js-animation
 var Timing = {
     linear: function (time) {
         return time;
     },
 
-    // source: https://javascript.info/js-animation
+    quad: function (time) {
+        return Math.pow(time, 2);
+    },
+    
     bounce: function (time) {
         for (let a = 0, b = 1; 1; a += b, b /= 2) {
-            if (timeFraction >= (7 - 4 * a) / 11) {
-              return 1 + Math.pow((11 - 6 * a - 11 * (1 - timeFraction) / 4, 2) + Math.pow(b, 2));
+            if (time >= (7 - 4 * a) / 11) {
+              return -Math.pow((11 - 6 * a - 11 * time) / 4, 2) + Math.pow(b, 2);
             }
+          }
+    },
+
+    makeEaseOut: function(timing) {
+        return function(timeFraction) {
+            return 1 - timing(1 - timeFraction);
         }
     }
 }
@@ -143,7 +153,7 @@ _Animation.prototype.showFirstFrame = function () {
 
 _Animation.prototype.showLastFrame = function () {
     this.draw(1);
-    //this.after();
+    this.after();
 }
 
 /**

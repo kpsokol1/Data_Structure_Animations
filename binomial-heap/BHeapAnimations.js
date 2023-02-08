@@ -27,10 +27,15 @@ TreeAnims.Binomial = (canvas) =>
         select:     select,
         moveCursor: moveCursor,
         swap:       swap,
+        dropNode:   dropNode,
     }
 
-    function select (tree, ...nodes) {
-        return TreeAnims(canvas).select(tree, NODE_RADIUS, ...nodes);
+    function dropNode(tree, node) {
+        return TreeAnims(canvas).dropNode(tree, node, NODE_RADIUS);
+    }
+
+    function select (tree, color, ...nodes) {
+        return TreeAnims(canvas).select(tree, NODE_RADIUS, color, ...nodes);
     }
 
     function moveCursor (tree, a, b) {
@@ -95,10 +100,10 @@ TreeAnims.Binomial = (canvas) =>
     
             let shift = new _Animation(Timing.linear, draw, canvas.animInterval);
     
-            return new CompositeAnimation(select(_root, _node), shift);
+            return new CompositeAnimation(select(_root, 'cyan', _node), shift);
         }
         
-        return select(_root, _node);
+        return select(_root, 'cyan', _node);
     }
     
     function mergeUp (heapA, heapB) {
