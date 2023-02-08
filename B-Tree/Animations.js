@@ -9,7 +9,7 @@ const c = canvas.getContext('2d');
 
 let animationQueue = [];              //queue to hold all the animations
 canvas.width = screen.availWidth;
-canvas.height = screen.availHeight;
+canvas.height = screen.availHeight-150;
 
 let keyWidth = .025 *screen.availWidth;
 let nodeSpacing = 0.01*screen.availWidth
@@ -18,7 +18,7 @@ let keysPerLevel = [0];
 let nodesPerLevel = [0];
 let nodesInsertedPerLevel = [0]
 let keysInsertedPerLevel = [0];
-let excludedKey;
+let excludedKey = [];
 let emptyLevel;
 let emptyIndex;
 
@@ -28,6 +28,7 @@ class Animations {
     let ref = setInterval(() => {
       if (i === animationQueue.length) {
         clearInterval(ref);
+        animationQueue.length = 0;
         return;
       }
       //this.drawTree(tree);
@@ -36,7 +37,155 @@ class Animations {
     }, pauseTime);
   }
 
-  static highlight(node, level, index, color, colorKey, key,tree,hold) {
+  static moveCanvasUp(tree,level,index){
+    let originalY = this.#getY(1);
+    let y = this.#getY(1);
+    let ref = setInterval(() => {
+      //c.clearRect(canvas.width/2-2,0,4,120);
+      if (y <= this.#getY(0)) {
+        clearInterval(ref);
+        c.translate(0,this.#getY(1)-this.#getY(0))
+        return;
+      }
+      c.clearRect(0, 0, canvas.width, canvas.height);
+      this.drawTree(tree,null,true,level,index);
+      c.clearRect(canvas.width/2-2,0,20,originalY-1);
+      c.translate(0,-1);
+      y--;
+    }, 10);
+  }
+
+  static moveRootDown(oldTree,root,newTree,root_key,root_level,root_key_index,child_node,child_node_level,child_node_index,child_node_key_index){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
+    this.drawTree(newTree,[root_key]);
+    let root_x = this.#getX(root,root_level,root_index,false,oldTree) + keyWidth * root_key_index;
+    let root_y = this.#getY(root_level);
+    let child_x = this.#getX(child_node,child_node_level,child_node_index,false,newTree) + keyWidth * child_node_key_index;
+    let child_y = this.#getY(child_node_level);
+    let width = root.keys.length * keyWidth;
+    let height = 40;
+    if (root_level === 0) {
+      root_x = root_x - (width / 2);
+    }
+
+    let xDistance = child_x-root_x;
+    let yDistance = root_y - child_y;
+    let xIncrement = xDistance/Math.abs(yDistance);
+    let currentY = root_y;
+    let currentX = root_x;
+    let ref = setInterval(() => {
+      if (currentY >= child_y) {
+        clearInterval(ref);
+        return;
+      }
+      c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      this.drawTree(newTree,[root_key]);
+      currentY += 1;
+      currentX += xIncrement;
+      c.textAlign = "center"
+      c.fillStyle = "red"
+      c.fillText(root_key,currentX+keyWidth/2,currentY+keyWidth/2);
+    }, 10);
+  }
+
+  static leftRotate(newTree,root,left,right,root_key,right_key,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
+    this.drawTree(newTree,[root_key,right_key])
+    let root_x = this.#getX(root,root_level,root_index,false,newTree) + keyWidth*root_key_index;
+    let root_y = this.#getY(root_level);
+    let left_x = this.#getX(left,left_level,left_index,false,newTree) + keyWidth*left_key_index;
+    let left_y = this.#getY(left_level);
+    let right_x = this.#getX(right,right_level,right_index,false,newTree) + keyWidth*right_key_index;
+    let right_y = this.#getY(right_level);
+
+    let width = root.keys.length * keyWidth;
+    let height = 40;
+    if (root_level === 0) {
+      root_x = root_x - (width / 2);
+    }
+
+    let rootXDistance = left_x-root_x;
+    let rightXDistance = root_x-right_x;
+    let yDistance = root_y-left_y;
+    let rootXIncrement = rootXDistance/Math.abs(yDistance);
+    let rightXIncrement = rightXDistance/Math.abs(yDistance);
+
+    let rootCurrentX = root_x;
+    let rootCurrentY = root_y;
+    let rightCurrentX = right_x;
+    let rightCurrentY = right_y;
+
+    let ref = setInterval(() => {
+      if (rootCurrentY >= left_y) { //fixme may have to check both here
+        clearInterval(ref);
+        this.drawTree(newTree);
+        return;
+      }
+      c.clearRect(rootCurrentX+2,rootCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      c.clearRect(rightCurrentX+2,rightCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      this.drawTree(newTree,[root_key,right_key]);
+      rootCurrentY += 1;
+      rightCurrentY -= 1;
+      rootCurrentX += rootXIncrement;
+      rightCurrentX += rightXIncrement;
+
+      c.textAlign = "center"
+      c.fillStyle = "red"
+      c.fillText(root_key,rootCurrentX+keyWidth/2,rootCurrentY+keyWidth/2);
+      c.fillText(right_key,rightCurrentX+keyWidth/2,rightCurrentY+keyWidth/2);
+    }, 10);
+  }
+
+  static rightRotate(newTree,root,left,right,root_key,left_key,left_index,right_index,root_level,left_level,right_level,root_key_index,left_key_index,right_key_index){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
+    this.drawTree(newTree,[root_key,left_key])
+    let root_x = this.#getX(root,root_level,root_index,false,newTree) + keyWidth*root_key_index;
+    let root_y = this.#getY(root_level);
+    let left_x = this.#getX(left,left_level,left_index,false,newTree) + keyWidth*left_key_index;
+    let left_y = this.#getY(left_level);
+    let right_x = this.#getX(right,right_level,right_index,false,newTree) + keyWidth*right_key_index;
+    let right_y = this.#getY(right_level);
+
+    let width = root.keys.length * keyWidth;
+    let height = 40;
+    if (root_level === 0) {
+      root_x = root_x - (width / 2);
+    }
+
+    let rootXDistance = right_x-root_x;
+    let leftXDistance = root_x-left_x;
+    let yDistance = root_y-left_y;
+    let rootXIncrement = rootXDistance/Math.abs(yDistance);
+    let leftXIncrement = leftXDistance/Math.abs(yDistance);
+
+    let rootCurrentX = root_x;
+    let rootCurrentY = root_y;
+    let leftCurrentX = left_x;
+    let leftCurrentY = left_y;
+
+    let ref = setInterval(() => {
+      if (rootCurrentY >= right_y) { //fixme may have to check both here
+        clearInterval(ref);
+        this.drawTree(newTree)
+        return;
+      }
+      c.clearRect(rootCurrentX+2,rootCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      c.clearRect(leftCurrentX+2,leftCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
+      this.drawTree(newTree,[root_key,left_key]);
+      rootCurrentY += 1;
+      leftCurrentY -= 1;
+      rootCurrentX += rootXIncrement;
+      leftCurrentX += leftXIncrement;
+
+      c.textAlign = "center"
+      c.fillStyle = "red"
+      c.fillText(root_key,rootCurrentX+keyWidth/2,rootCurrentY+keyWidth/2);
+      c.fillText(left_key,leftCurrentX+keyWidth/2,leftCurrentY+keyWidth/2);
+    }, 10);
+  }
+
+  static highlight(node, level, color, colorKey, key,tree,hold) {
+    let index = this.#getNodesAndKeysBehind(level,node)[1]; //fixme will this always work on a constantly changing tree?
     if(!hold){
       this.drawTree(tree);
     }
@@ -69,8 +218,9 @@ class Animations {
     this.drawTree(tree);
   }
 
-  static async transferSuccessor(root, root_level,root_index,successor,successor_level,tree){
-    let root_x = this.#getX(root,root_level,root_index,false,tree);
+  static async transferSuccessor(root, root_level,successor,successor_level,root_key_index,tree){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
+    let root_x = this.#getX(root,root_level,root_index,false,tree)+keyWidth*root_key_index;
     let root_y = this.#getY(root_level);
     let successor_index = this.#getNodesAndKeysBehind(successor_level,successor)[1];
     let successor_x = this.#getX(successor,successor_level,successor_index,false,tree);
@@ -80,7 +230,8 @@ class Animations {
     if (root_level === 0) {
       root_x = root_x - (width / 2);
     }
-    c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+    c.fillStyle = "white";
+    c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
     //animationQueue.push(function() {Animations.highlight(successor,successor_level,successor_index,"red", false,successor.keys[0],tree)});
 
     //move number to the root
@@ -96,7 +247,8 @@ class Animations {
       }
       c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
       this.drawTree(tree);
-      c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+      c.fillStyle = "white";
+      c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
 
       //c.clearRect(successor_x+2,successor_y+2,keyWidth-4,height-4);     //fixme may have to modify this
       currentY -= 1;
@@ -107,11 +259,12 @@ class Animations {
     }, 10);
   }
 
-  static async transferPredecessor(root, root_level,root_index,predecessor,predecessor_level,key_index,tree){
-    let root_x = this.#getX(root,root_level,root_index,false,tree);
+  static async transferPredecessor(root, root_level,predecessor,predecessor_level,root_key_index,predecessor_key_index,tree){
+    let root_index = this.#getNodesAndKeysBehind(root_level,root)[1]; //fixme will this always work on a constantly changing tree?
+    let root_x = this.#getX(root,root_level,root_index,false,tree)+keyWidth*root_key_index;
     let root_y = this.#getY(root_level);
     let predecessor_index = this.#getNodesAndKeysBehind(predecessor_level,predecessor)[1];
-    let predecessor_x = this.#getX(predecessor,predecessor_level,predecessor_index,false,tree)+keyWidth*key_index;
+    let predecessor_x = this.#getX(predecessor,predecessor_level,predecessor_index,false,tree)+keyWidth*predecessor_key_index;
     let predecessor_y = this.#getY(predecessor_level);
     let width = root.keys.length * keyWidth;
     let height = 40;
@@ -119,7 +272,8 @@ class Animations {
       root_x = root_x - (width / 2);
     }
     //animationQueue.push(function() {Animations.highlight(predecessor,predecessorLevel,,"red", false,key,tempTree)});
-    c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+    c.fillStyle = "white";
+    c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
     //animationQueue.push(function() {Animations.highlight(successor,successor_level,successor_index,"red", false,successor.keys[0],tree)});
 
     //move number to the root
@@ -135,7 +289,8 @@ class Animations {
       }
       c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
       this.drawTree(tree);
-      c.clearRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
+      c.fillStyle = "white";
+      c.fillRect(root_x+2,root_y+2,keyWidth-4,height-4); //clear root number and make space
       //c.clearRect(predecessor_x+2,predecessor_y+2,keyWidth-4,height-4);     //fixme may have to modify this
       currentY -= 1;
       currentX += xIncrement;
@@ -157,7 +312,7 @@ class Animations {
       nodesInsertedPerLevel.length = 0;
       keysInsertedPerLevel.length = 0;
       keysAtLevel.length = 0;
-      this.#drawNode(0, 0, 0, tree.root, 0, 0,tree);
+      this.#drawNode(0, 0, 0, tree.root, 0, 0,tree,ignoreRoot);
       excludedKey = null;
       emptyLevel = -1;
       emptyIndex = -1;
@@ -178,14 +333,13 @@ class Animations {
         clearInterval(ref);
         return;
       }
-      this.drawTree(tree,node.keys[index]);
+      this.drawTree(tree,[node.keys[index]]);
       c.fillText(node.keys[index], x_pos + keyWidth / 2,
           y_pos + height / 2);
       y_pos++;
       c.textAlign = "center"
     }, 10);
   }
-
 
   static #getX(node, level, index, isInserting,tree) {
     if (level === 0) {
@@ -247,7 +401,7 @@ class Animations {
         * screen.availHeight;
   }
 
-  static #drawNode(level, index, start, node, parentX, parentY,tree) {
+  static #drawNode(level, index, start, node, parentX, parentY,tree,ignoreRoot) {
     if (level === nodesInsertedPerLevel.length) {
       nodesInsertedPerLevel[level] = 1;
     } else {
@@ -255,7 +409,7 @@ class Animations {
     }
     //draw node
     let dimensions = this.#drawRect(level, index, start, node, parentX,
-        parentY,tree);
+        parentY,tree,ignoreRoot);
     let pX = dimensions[0];
     let pY = dimensions[1];
 
@@ -264,7 +418,7 @@ class Animations {
       _start = nodesInsertedPerLevel[level + 1];
     }
     for (let i = 0; i < node.childNodes.length; i++) {
-      this.#drawNode(level + 1, i, _start, node.childNodes[i], pX, pY,tree);
+      this.#drawNode(level + 1, i, _start, node.childNodes[i], pX, pY,tree,ignoreRoot);
     }
   }
 
@@ -288,7 +442,7 @@ class Animations {
     }
   }
 
-  static #drawRect(level, index, start, node, parentX, parentY,tree) {
+  static #drawRect(level, index, start, node, parentX, parentY,tree,ignoreRoot) {
     let x_pos = this.#getX(node, level, index + start, true,tree);
     let y_pos = this.#getY(level, index + start);
     let width = node.keys.length * keyWidth;
@@ -296,17 +450,22 @@ class Animations {
     if (level === 0) {
       x_pos = x_pos - (width / 2);
     }
+    c.fillStyle = "white";
+    c.strokeStyle = "black";
+    c.lineWidth = 2;
+    c.fillRect(x_pos, y_pos, width, height);
     c.strokeRect(x_pos, y_pos, width, height);
     this.#setFont();
+    c.fillStyle = "black";
     for (let i = 0; i < node.keys.length; i++) {
       c.textAlign = "center";
-      if(node.keys[i] !== excludedKey){
+      if(excludedKey === null || !excludedKey.includes(node.keys[i])){
         c.fillText(node.keys[i], x_pos + keyWidth / 2 + i * keyWidth,
             y_pos + height / 2);
       }
     }
     //draw Line
-    if (parentX !== 0 && parentY !== 0) {
+    if ((parentX !== 0 && parentY !== 0)) {
       c.beginPath();
       c.moveTo(x_pos + width / 2, y_pos);
       c.lineTo(parentX + index * keyWidth, parentY + height);
