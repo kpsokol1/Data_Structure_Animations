@@ -59,10 +59,11 @@ BinomialHeap.prototype.mergeHeaps = function (a, b) {
     if (typeof b.head === 'undefined') return a.head;
 
     var head;
+    // iterators for the two heaps
     var an = a.head;
     var bn = b.head;
 
-    if (a.head.degree <= b.head.degree) {
+    if (a.head.degree <= b.head.degree) { // merge heaps
         head = a.head;
         an = an.sibling;
     } else {
@@ -77,7 +78,7 @@ BinomialHeap.prototype.mergeHeaps = function (a, b) {
 
     var tail = head;
 
-    while (an && bn) {
+    while (an && bn) { // search through heaps and set pointers to new siblings
         if (an.degree <= bn.degree) {
             tail.sibling = an;
             an = an.sibling;
@@ -109,10 +110,11 @@ BinomialHeap.prototype.linkTrees = function (tree, other) {
     TreeAnims.Binomial(this.canvas).fixSubTree(other);
     TreeAnims.Binomial(this.canvas).fixSubTree(tree);
 
-    tree.degree++;
+    tree.degree++; // increase degree of tree to be combined
     this.animQueue.push(
         TreeAnims.Binomial(this.canvas).link(this.head, tree, other));
-
+    
+    // set one tree as a child of the other
     other.parent = tree;
     other.sibling = tree.child;
     tree.child = other;
@@ -135,7 +137,7 @@ BinomialHeap.prototype.compare = function (a, b) {
  * @param {BinomialHeap} heap the other heap
  */
 BinomialHeap.prototype.union = function (heap) {
-    this.nodeCount += heap.nodeCount;
+    this.nodeCount += heap.nodeCount; // add nodeCounts together
     var newhead = this.mergeHeaps(this, heap);
 
     this.head = newhead;
@@ -147,7 +149,7 @@ BinomialHeap.prototype.union = function (heap) {
     var cur = newhead;
     var next = newhead.sibling;
 
-    while (next) {
+    while (next) { // go through tree and link trees when necessary
         if (cur.degree !== next.degree || next.sibling && next.sibling.degree === cur.degree) {
             prev = cur;
             cur = next;
@@ -183,6 +185,7 @@ BinomialHeap.prototype.insert = function (key) {
     this.animQueue.push(
         TreeAnims.Binomial(this.canvas).insert(this.head, newnode));
 
+    // make new node and run union algorithm to fix trees
     temp.head = newnode;
     temp.nodeCount++;
 
@@ -203,7 +206,7 @@ BinomialHeap.prototype.findMin = function () {
     var min = this.head;
     var next = min.sibling;
 
-    while (next) {
+    while (next) { // iterate through heap and keep track of min key value
         if (this.compare(next, min) < 0) min = next;
         next = next.sibling;
     }
@@ -285,14 +288,14 @@ BinomialHeap.prototype.removeTreeRoot = function (heap, root, prev) {
  * @return {_Node} the heap's minimum node or undefined if empty
  */
 BinomialHeap.prototype.extractMin = function () {
-    if (!this.head) return undefined;
+    if (!this.head) return undefined; // if heap is empty
 
     var min = this.head;
     var minprev;
     var next = min.sibling;
     var nextprev = min;
 
-    while (next) {
+    while (next) { // find min and keep track of nearby nodes
         if (this.compare(next, min) < 0) {
             min = next;
             minprev = nextprev;
@@ -300,6 +303,7 @@ BinomialHeap.prototype.extractMin = function () {
         nextprev = next;
         next = next.sibling;
     }
+    // remove the found min value
     this.removeTreeRoot(this, min, minprev);
     this.nodeCount--;
 
@@ -333,7 +337,8 @@ BinomialHeap.prototype.decreaseKey = function (node, key) {
     while (par && this.compare(cur, par) < 0) {
         this.animQueue.push(
             TreeAnims.Binomial(this.canvas).swap(this.head, cur, par));
-
+        
+        // move node up until it is in the correct place for its new key
         var temp = cur.key;
         cur.key = par.key;
         par.key = temp;
@@ -343,12 +348,13 @@ BinomialHeap.prototype.decreaseKey = function (node, key) {
 }
 
 /**
+ * searches for node with key value
  * @param {_Node} head 
  * @param {int} key 
  * @return {_Node} the found node if found, otherwise undefined
  */
 function find (head, key) {
-    while (head) {
+    while (head) { // search through heap and checks if key is found
         if (head.key == key) return head;
         var found = find(head.child, key);
         if (found) return found;
@@ -401,7 +407,7 @@ BinomialHeap.prototype.recursiveFind = function (head, key) {
  * @return {boolean} whether the key is actually deleted
  */
 BinomialHeap.prototype.delete = function (key) {
-    var found = this.find(key);
+    var found = this.find(key); // find key value and store node
     if (!found) return false;
 
     this.decreaseKey(found, Number.NEGATIVE_INFINITY); // makes node have unique minimum key of -inf
@@ -428,11 +434,11 @@ BinomialHeap.prototype.delete = function (key) {
 }
 
 /**
- * prints the values of the keys of a tree
+ * prints the values of the keys of a tree - for testing purposes
  * @param {_Node} head 
  */
 function printTree (head) {
-    while (head) {
+    while (head) { // recursively runs through tree and prints key values
         document.body.append(head.key + " ");
         printTree(head.child);
         head = head.sibling;
@@ -440,11 +446,11 @@ function printTree (head) {
 }
 
 /**
- * prints the trees of a heap, with a '|' to separate them
+ * prints the trees of a heap, with a '|' to separate them - for testing purposes
  * @param {_Node} head 
  */
 function printHeap (head) {
-    while (head) {
+    while (head) { // runs through heads of each tree in the heap and prints them
         document.body.append(head.key + " ");
         printTree(head.child);
         head = head.sibling;
