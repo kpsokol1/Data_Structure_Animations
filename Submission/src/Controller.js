@@ -65,6 +65,7 @@ function Controller(Tree, title) {
     document.body.append(this.playback);
     document.body.append(createElement('br'));
     document.body.append(this.canvas);
+    document.body.append(createElement('br'));
 
     this.runButton.onclick = () => {this.toggleRun()};
     this.prevButton.onclick = () => {this.stepBack()};
@@ -92,6 +93,13 @@ function Controller(Tree, title) {
     if (this.animQueue.length > 0) {
         this.animQueue[0].showFirstFrame();
         this.playQueue(0);
+    } else {
+        for (let i = 0; i < 16; ++i) {
+            this.tree.insert(randInt(0, 99));
+        }
+        this.playback.max = this.animQueue.length;
+        this.playQueue(0);
+        this.toggleRun();
     }
 }
 

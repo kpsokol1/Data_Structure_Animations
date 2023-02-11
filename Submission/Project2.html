@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<title>CS 570, Project 2</title>
+
+<script type="text/javascript" src="src/Common.js"></script>
+<script type="text/javascript" src="src/Animation.js"></script>
+<script type="text/javascript" src="src/TreeAnimations.js"></script>
+<script type="text/javascript" src="src/RBTree/BinaryTreeAnimations.js"></script>
+<script type="text/javascript" src="src/RBTree/RBTree.js"></script>
+<script type="text/javascript" src="src/BHeap/BHeapAnimations.js"></script>
+<script type="text/javascript" src="src/BHeap/BHeap.js"></script>
+<script type="text/javascript" src="src/B-Tree/B-TreeAnimations.js"></script>
+<script type="text/javascript" src="src/B-Tree/B-Tree.js"></script>
+<script type="text/javascript" src="src/Controller.js"></script>
+
+<script>
+    window.onload = function() {
+        new Controller(BinomialHeap, 'Binomial Heap');
+        new Controller(RBTree, 'Red-Black Tree');
+        new Controller(BTreeAdapter, 'B-Tree');
+
+    }
+</script>
+
+<style>
+   .header {
+    display:flex;
+   }
+
+   h1 {
+        font-size:100px;
+        font-style:italic;
+        font-family:Georgia, 'Times New Roman', Times, serif;
+        padding: 35px;
+        display:flex;
+    }
+</style>
+
+<div class="header">
+    <h1>Billiard Trees</h1>
+    <img src="res/BilliardBalls.png" height="360", width="360">
+</div>
+
+</html>
