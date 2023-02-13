@@ -134,6 +134,7 @@ class RBTree {
 
         this.canvas = controller.canvas;
         this.animQueue = [];
+        this.keys = [];
     }
     find(key) {
         let node = this.root;
@@ -157,6 +158,9 @@ class RBTree {
         return null;
     }
     insert(key, value) {
+        this.keys.push(key);
+        this.keys.sort((a, b) => b - a);
+
         let node = new RBTNode(key, value);
         node.linkLeft(this.leaf);
         node.linkRight(this.leaf);
@@ -296,6 +300,11 @@ class RBTree {
         this.animQueue.push(
             TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node));
         return node;
+    }
+    extractMin() {
+        if (this.keys.length > 0) {
+            this.delete(this.keys.pop());
+        }
     }
     delete(key) {
         let forRemove = this.leaf;

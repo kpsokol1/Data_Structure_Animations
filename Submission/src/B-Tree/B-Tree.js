@@ -1,5 +1,6 @@
-let b_tree = null;   // don't ask
+let b_tree = null;
 let animQueue = [];
+let keys = [];
 let canvas;
 
 class BTreeAdapter {
@@ -12,6 +13,8 @@ class BTreeAdapter {
 
   insert (key) {
     b_tree.insert(key);
+    keys.push(key);
+    keys.sort((a, b) => b - a);
   }
 
   find (key) {
@@ -20,6 +23,12 @@ class BTreeAdapter {
 
   delete (key) {
     b_tree.delete(key);
+  }
+
+  extractMin () {
+    if (keys.length > 0) {
+      b_tree.delete(keys.pop());
+    }
   }
 }
 

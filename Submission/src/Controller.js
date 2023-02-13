@@ -10,6 +10,7 @@ function Controller(Tree, title, commands) {
     this.opSelect.append(createElement('option', {'value':'insert', 'innerHTML':'Insert'}));
     this.opSelect.append(createElement('option', {'value':'delete', 'innerHTML':'Delete'}));
     this.opSelect.append(createElement('option', {'value':'find', 'innerHTML':'Find'}));
+    this.opSelect.append(createElement('option', {'value':'min', 'innerHTML':'Extract Min'}));
     this.operand = createElement('input', {'type':'text', 'size':'4'});
     this.submitOperand = createElement('input', {'type':'submit', 'value':'Submit'});
     this.canvas = createElement('div', {'style':'background: green; width: 1280px; height: 540px; position: relative'});
@@ -106,12 +107,15 @@ function Controller(Tree, title, commands) {
             case 'find':
                 this.tree.find(command.operand);
                 break;
+            case 'min':
+                this.tree.extractMin(command.operand);
             }
         }
+
+        this.playback.max = this.animQueue.length;
+        this.playQueue(0);
+        this.toggleRun();
     }
-    this.playback.max = this.animQueue.length;
-    this.playQueue(0);
-    this.toggleRun();
 }
 
 function randInt(min, max) {
@@ -139,6 +143,9 @@ Controller.prototype.execute = function (operation, operand) {
         break;
     case 'find':
         this.tree.find(num);
+        break;
+    case 'min':
+        this.tree.extractMin();
         break;
     }
 
