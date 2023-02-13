@@ -1,4 +1,4 @@
-function Controller(Tree, title) {
+function Controller(Tree, title, commands) {
 
     this.runButton = createElement('button', {'innerHTML':'run >>'});
     this.nextButton = createElement('button', {'innerHTML':'next >'});
@@ -93,14 +93,25 @@ function Controller(Tree, title) {
     if (this.animQueue.length > 0) {
         this.animQueue[0].showFirstFrame();
         this.playQueue(0);
-    } else {
-        for (let i = 0; i < 16; ++i) {
-            this.tree.insert(randInt(0, 99));
+    } else if (commands) {
+        for (let command of commands) {
+            switch (command.operation) {
+            case 'insert': {
+                this.tree.insert(command.operand);
+                break;
+            }
+            case 'delete':
+                this.tree.delete(command.operand);
+                break;
+            case 'find':
+                this.tree.find(command.operand);
+                break;
+            }
         }
-        this.playback.max = this.animQueue.length;
-        this.playQueue(0);
-        this.toggleRun();
     }
+    this.playback.max = this.animQueue.length;
+    this.playQueue(0);
+    this.toggleRun();
 }
 
 function randInt(min, max) {

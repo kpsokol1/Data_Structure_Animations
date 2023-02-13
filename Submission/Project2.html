@@ -16,9 +16,36 @@
 
 <script>
     window.onload = function() {
-        new Controller(BinomialHeap, 'Binomial Heap');
-        new Controller(RBTree, 'Red-Black Tree');
-        new Controller(BTreeAdapter, 'B-Tree');
+        new Controller(BinomialHeap, 'Binomial Heap' /*, [
+            {operation:'insert', operand:1},
+            {operation:'insert', operand:2},
+            {operation:'insert', operand:3},
+            {operation:'insert', operand:4},
+            {operation:'insert', operand:5},
+            {operation:'insert', operand:6},
+            {operation:'insert', operand:7},
+            {operation:'insert', operand:8},
+        ]*/);
+        new Controller(RBTree, 'Red-Black Tree' /*, [
+            {operation:'insert', operand:1},
+            {operation:'insert', operand:2},
+            {operation:'insert', operand:3},
+            {operation:'insert', operand:4},
+            {operation:'insert', operand:5},
+            {operation:'insert', operand:6},
+            {operation:'insert', operand:7},
+            {operation:'insert', operand:8},
+        ]*/);
+        new Controller(BTreeAdapter, 'B-Tree' /*, [
+            {operation:'insert', operand:1},
+            {operation:'insert', operand:2},
+            {operation:'insert', operand:3},
+            {operation:'insert', operand:4},
+            {operation:'insert', operand:5},
+            {operation:'insert', operand:6},
+            {operation:'insert', operand:7},
+            {operation:'insert', operand:8},
+        ]*/);
 
     }
 </script>
