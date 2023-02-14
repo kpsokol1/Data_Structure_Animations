@@ -325,7 +325,7 @@ BinomialHeap.prototype.extractMin = function () {
     var nextprev = min;
 
     while (next) { // find min and keep track of nearby nodes
-        this.animQueue.push(TreeAnims.Binomial(this.canvas).moveCursor(this.head, nextprev, next));
+        //this.animQueue.push(TreeAnims.Binomial(this.canvas).moveCursor(this.head, nextprev, next));
 
         if (this.compare(next, min) < 0) {
             min = next;
@@ -334,7 +334,7 @@ BinomialHeap.prototype.extractMin = function () {
         nextprev = next;
         next = next.sibling;
     }
-    this.animQueue.push(TreeAnims.Binomial(this.canvas).select(this.head, 'yellow', min));
+    //this.animQueue.push(TreeAnims.Binomial(this.canvas).select(this.head, 'yellow', min));
 
     // remove the found min value
     this.removeTreeRoot(this, min, minprev);
