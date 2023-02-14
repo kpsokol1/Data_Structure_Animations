@@ -77,7 +77,7 @@ class BTreeAnims {
         c.clearRect(currentX+2,currentY+2,keyWidth-4,height-4);     //fixme may have to modify this
         this.drawTree(newTree,[root_key]);
         currentY = root_y + yDistance * t;
-        currentX = root_x * xDistance * t;
+        currentX = root_x + xDistance * t;
         c.textAlign = "center"
         c.fillStyle = "red"
         c.fillText(root_key,currentX+keyWidth/2,currentY+keyWidth/2);
@@ -95,7 +95,7 @@ class BTreeAnims {
           root_x = root_x - (width / 2);
         }
         xDistance = child_x-root_x;
-        yDistance = root_y - child_y;
+        yDistance = child_y-root_y;
         xIncrement = xDistance/Math.abs(yDistance);
         currentY = root_y;
         currentX = root_x;
@@ -255,6 +255,9 @@ class BTreeAnims {
     let right_x;
     let right_y;
 
+    let width;
+    let height;
+
     let rootXDistance;
     let rightXDistance;
     let yDistance;
@@ -275,8 +278,8 @@ class BTreeAnims {
         c.clearRect(rootCurrentX+2,rootCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
         c.clearRect(rightCurrentX+2,rightCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
         this.drawTree(newTree,[root_key,right_key]);
-        rootCurrentY = root_y + yDistance * t;
-        rightCurrentY = right_y - yDistance * t;
+        rootCurrentY = root_y - yDistance * t;
+        rightCurrentY = right_y + yDistance * t;
         rootCurrentX = root_x + rootXDistance * t;
         rightCurrentX = right_x + rightXDistance * t;
   
@@ -342,8 +345,8 @@ class BTreeAnims {
         c.clearRect(rootCurrentX+2,rootCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
         c.clearRect(leftCurrentX+2,leftCurrentY+2,keyWidth-4,height-4);     //fixme may have to modify this
         this.drawTree(newTree,[root_key,left_key]);
-        rootCurrentY = root_y + yDistance * t;
-        leftCurrentY = left_y - yDistance * t;
+        rootCurrentY = root_y - yDistance * t;
+        leftCurrentY = left_y + yDistance * t;
         rootCurrentX = root_x + rootXDistance * t;
         leftCurrentX = left_x + leftXDistance * t;
   
@@ -471,7 +474,7 @@ class BTreeAnims {
 
         //move number to the root
         xDistance = root_x - successor_x;
-        yDistance = root_y - successor_y;
+        yDistance = Math.abs(root_y - successor_y);
         xIncrement = xDistance/Math.abs(yDistance);
         currentY = successor_y;
         currentX = successor_x;
@@ -530,7 +533,7 @@ class BTreeAnims {
 
         //move number to the root
         xDistance = root_x - predecessor_x;
-        yDistance = root_y - predecessor_y;
+        yDistance = Math.abs(root_y - predecessor_y);
         xIncrement = xDistance/Math.abs(yDistance);
         currentY = predecessor_y;
         currentX = predecessor_x;

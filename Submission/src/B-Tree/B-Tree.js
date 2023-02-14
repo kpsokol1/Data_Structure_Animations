@@ -185,7 +185,7 @@ class Node {
     }
 
     if(i < this.keys.length && key === this.keys[i]){                     //we found the key
-      animQueue.push(BTreeAnims.highlight(tempNode,level,"blue", true,key,tempTree,false));
+      animQueue.push(BTreeAnims.highlight(tempNode,level,"red", true,key,tempTree,false));
       return "found";                                                    //return the node the key was found out and the index of the key in the node  //fixme may need to change this later
     }
 
