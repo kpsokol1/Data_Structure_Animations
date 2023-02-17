@@ -353,7 +353,7 @@ BinomialHeap.prototype.decreaseKey = function (node, key) {
     var cur = node;
     var par = cur.parent;
 
-    let _select = select(this.layer1, TreeAnims.Binomial.NODE_RADIUS, 'cyan', node);
+    let _select = select(this.layer1, TreeAnims.Binomial.NODE_RADIUS, 'yellow', node);
     let head = cloneTree(this.head);
 
     this.animQueue.push(
