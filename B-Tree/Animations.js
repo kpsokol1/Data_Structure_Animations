@@ -124,7 +124,7 @@ class Animations {
     }, 10);
   }
 
-  static async splitRoot(oldTree,root,leftCutoff,rightCutoff){
+  static async splitRoot(oldTree,root){
     //move whole canvas down
     return new Promise((resolve) => {
       let originalY = this.#getY(0);

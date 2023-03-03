@@ -1,3 +1,5 @@
+//Authors: Kyle Sokol and Sungmin Kim
+//Description: Raw B-Tree data structure
 class BTree{
   constructor(t){
     //member variables
@@ -51,50 +53,55 @@ class Node {
 
   //splits a child by making a left and a right node. Puts the median of the left and right into the parent
   splitChild(childIndex,level,tree,root,isRoot){
-    let leftCutoff = this.t - 1;
-    let rightCutoff = this.t;
-    let right = new Node(this.t)                               //make a new node to hold the right side of the node to be split //fixme does it need to be left.t?
+    let leftCutoff = this.t - 1;                               //left bound of the median that will be split from the node
+    let rightCutoff = this.t;                                  //right bound of the median that will be split from the node
+    let right = new Node(this.t)                               //make a new node to hold the right side of the node to be split
     let left = this.childNodes[childIndex]                     //initially set the left side to be the entire node to be split
-    right.isLeaf = left.isLeaf                                //if the left child was a leaf, that means the new right node must be a leaf
-    let oldRootCopy = JSON.parse(JSON.stringify(left));
+    right.isLeaf = left.isLeaf                                 //if the left child was a leaf, that means the new right node must be a leaf
+    let oldRootCopy = JSON.parse(JSON.stringify(left));        //copy of the root node at this point in time which will be used later in the animation queue
+
     //move the keys from left to right child
-    for(let j = this.t; j < left.keys.length; j++){              //we split the child in half at the mid-point index (t-1), left side might be bigger
+    for(let j = this.t; j < left.keys.length; j++){           //we split the child in half at the mid-point index (t-1), left side might be bigger
       right.keys.push(left.keys[j]);                          //assign the rightmost keys of the left child to the right child
     }
 
     //move the children form left to right child
-    let childrenMoved = 0;
+    let childrenMoved = 0;                                                  //counter for the number of children that have been displaced
     if (!left.isLeaf){
-      for(let j = this.t; j <left.childNodes.length; j++){                          //we split the child in half at the mid-point index (t-1), left side might be bigger
+      for(let j = this.t; j <left.childNodes.length; j++){                  //we split the child in half at the mid-point index (t-1), left side might be bigger
         right.childNodes.push(left.childNodes[j]);                          //assign the rightmost keys of the left child to the right child
-        childrenMoved++;
+        childrenMoved++;                                                    //increment how many children have been displaced
       }
     }
     left.keys.length = this.t;                                                   //essentially delete from the left what was moved to right
-    left.childNodes.length = left.childNodes.length - childrenMoved;
+    left.childNodes.length = left.childNodes.length - childrenMoved;             //account for the children removed from the left node
 
     //insert right as a child of the new parent
-    for(let j = this.childNodes.length - 1; j > childIndex; j--){         //fixme did I use the right length here?
+    for(let j = this.childNodes.length - 1; j > childIndex; j--){
       this.childNodes[j+1] = this.childNodes[j];                           //move everything to the right and insert the new child
     }
-    this.childNodes[childIndex+1] = right;                                //insert right, 1 index to the right of the left (original node)
+    this.childNodes[childIndex+1] = right;                                 //insert right, 1 index to the right of the left (original node)
 
     //insert the median into the root
     for(let j = this.keys.length - 1; j >= childIndex; j--){
       this.keys[j+1] = this.keys[j]          ;                             //move all keys to the right, including i
     }
     this.keys[childIndex] = left.keys[left.keys.length-1]  ;               //slot the new median key (rightmost index of left array) into the new parent array
+    left.keys.length = left.keys.length - 1;                               //get rid of the median from the end of the left node
+
+    //copies of values that will be used in the animations queue
     let key = left.keys[left.keys.length-1];
-    left.keys.length = left.keys.length - 1;                                        //get rid of the median from the end of the left node
     let newRootCopy = JSON.parse(JSON.stringify(this));
     let tempTree_2 = JSON.parse(JSON.stringify(b_tree));
-    if(isRoot){
-      animationQueue.push(function() {Animations.splitRoot(tree,root,leftCutoff,rightCutoff)});
-      animationQueue.push(function() {Animations.extracted(tree,leftCutoff,rightCutoff,root,[key])});
-      animationQueue.push(function() {Animations.drawTree(tempTree_2)});
+
+    //add required animations from this operation to the animation queue
+    if(isRoot){                                                                                               //check if we inserted into the root
+      animationQueue.push(function() {Animations.splitRoot(tree,root)});                                      //push the split root animation onto the queue
+      animationQueue.push(function() {Animations.extracted(tree,leftCutoff,rightCutoff,root,[key])});    // push the extract root animation onto the queue
+      animationQueue.push(function() {Animations.drawTree(tempTree_2)});                                      //push the draw tree animation onto the queue
     }
     else{
-      let oldKeyIndex = this.t-1;
+      let oldKeyIndex = this.t-1;               //
       animationQueue.push(function() {Animations.splitChildNode(tempTree_2,tree,oldRootCopy,newRootCopy,level,level-1,oldKeyIndex,childIndex,key)});
     }
   }
@@ -135,7 +142,7 @@ class Node {
   }
 
   //search
-  search(key, level,index){
+  search(key, level){
     let tempNode = this;
     let tempTree = JSON.parse(JSON.stringify(b_tree));
     animationQueue.push(function() {Animations.highlight(tempNode,level,"red", false,key,tempTree,false)});
