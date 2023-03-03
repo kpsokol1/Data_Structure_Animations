@@ -1,3 +1,9 @@
+/**
+ * @author Sungmin Kim
+ */
+
+// 'Link' the canvas to the animation functions
+// and return an object containing the animation functions
 TreeAnims.Binomial = (canvas) => 
 {
     const MARGIN_TOP = 60;
@@ -5,29 +11,39 @@ TreeAnims.Binomial = (canvas) =>
     const NODE_RADIUS = 15;
     const SCREEN_WIDTH = 1000;
     const SCREEN_HEIGHT = 400;
+
+    // Not a hard limit on the degrees of the trees,
+    // just the maximum degree that will fit on the screen
     const MAX_DEGREE = 5;
+
+    // horizontal distance between nodes
     const DIFF_X = (SCREEN_WIDTH - (MARGIN_LEFT + 3*NODE_RADIUS))/ (2 ** MAX_DEGREE - 1);
+    
+    // vertical distance between nodes
     const DIFF_Y = (SCREEN_HEIGHT - MARGIN_TOP) / (MAX_DEGREE + 1);
 
+    // needed to make the node radius public
     TreeAnims.Binomial.NODE_RADIUS = NODE_RADIUS;
 
+    // scale the actual canvas to the logical representation of the canvas
     canvas.resetTransform();
     canvas.scale(
         canvas.width / SCREEN_WIDTH,
         canvas.height / SCREEN_HEIGHT
     );
 
+    // return the animation functions
     return {
-        insert:     insert,
-        mergeUp:    mergeUp,
-        mergeLeft:  mergeLeft,
-        link:       link,
-        fixTree:    fixTree,
-        fixSubTree: fixSubTree,
-        select:     select,
-        moveCursor: moveCursor,
-        swap:       swap,
-        dropNode:   dropNode,
+        insert,
+        mergeUp,
+        mergeLeft,
+        link,
+        fixTree,
+        fixSubTree,
+        select,
+        moveCursor,
+        swap,
+        dropNode,
     }
 
     function dropNode(tree, node) {
@@ -46,6 +62,7 @@ TreeAnims.Binomial = (canvas) =>
         return TreeAnims(canvas).swap(tree, a, b, NODE_RADIUS);
     }
 
+    // get the position of the leftmost child
     function getChildPos (tree, index) {
         return {
             x: tree.x - DIFF_X * Math.floor(2 ** (tree.degree - index - 1) / 2),
@@ -53,6 +70,7 @@ TreeAnims.Binomial = (canvas) =>
         }
     }
 
+    // draw the tree, but don't draw the rest of the trees in the root list
     function drawSubTree (tree, ctx) {
         if (!tree) return;
     
@@ -69,10 +87,14 @@ TreeAnims.Binomial = (canvas) =>
         drawNode(tree, NODE_RADIUS, ctx);
     }
     
+    // returns the width of the tree determined
+    // by the sublevel with the greatest number of nodes
     function treeWidth (degree) {
         return DIFF_X * (2 ** (degree > 1 ? degree - 1 : 0));
     }
     
+    // draw the new node appearing in the left margin,
+    // then show it sliding into the front of the root list
     function insert (tree, node) {
         node.x = MARGIN_LEFT / 2;
         node.y = MARGIN_TOP;
@@ -106,6 +128,8 @@ TreeAnims.Binomial = (canvas) =>
         return select(_root, 'cyan', _node);
     }
     
+    // After deleting the parent node, show the orphaned
+    // nodes moving up into the root list
     function mergeUp (heapA, heapB) {
         let a = cloneTree(heapA);
         let b = cloneTree(heapB);
@@ -128,6 +152,7 @@ TreeAnims.Binomial = (canvas) =>
         return new _Animation(Timing.linear, draw, canvas.animInterval);
     }
     
+    // Animate the nodes in the right heap merging into the left heap
     function mergeLeft (head, left, right) {
         let h = cloneTree(head);
         let r = cloneTree(right);
@@ -173,6 +198,7 @@ TreeAnims.Binomial = (canvas) =>
         return new _Animation(Timing.linear, draw, duration);
     }
     
+    // animate the two trees being linked together
     function link (tree, nodeA, nodeB) {
         let rootList = [];
     
@@ -240,6 +266,8 @@ TreeAnims.Binomial = (canvas) =>
             });
     }
     
+    // After moving the head node, fix the positions
+    // for the rest of the trees in the root list
     function fixTree (head, pos = MARGIN_LEFT) {
         let x = pos;
         for (let cur = head; cur; cur = cur.sibling) {
@@ -249,6 +277,8 @@ TreeAnims.Binomial = (canvas) =>
         }
     }
     
+    // After moving the root node, fix the positions
+    // for the rest of the nodes in the tree
     function fixSubTree (tree, pos = tree.x) {
         if (!tree) return;
     

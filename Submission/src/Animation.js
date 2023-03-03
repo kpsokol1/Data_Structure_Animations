@@ -3,10 +3,6 @@
  */
 
 /**
- * @class Timing
- * 
- * This should strictly be a static class
- * (i.e. should never be instantiated).
  * Timing functions control the rate at
  * which an Animation progresses. For
  * Example, an ease-in would look like a 
@@ -40,6 +36,10 @@ var Timing = {
     }
 }
 
+// Returns an object that plays multiple animations 
+// together as if they were a single animation.
+// The reason we need this is sometimes we want the 
+// previous and next buttons to skip over multiple animations.
 function CompositeAnimation(...animations) {
     this.sequence = animations;
     this.finished = Promise.resolve();

@@ -1,5 +1,14 @@
-function Controller(Tree, title, commands) {
+/**
+ * @author Sungmin Kim
+ */
 
+// A controller object controls and owns a tree and a canvas.
+// It passes itself to the tree so the animations are drawn on the controller's canvas.
+// The controller also controls the animations produced by the tree.
+// The controller also owns the DOM elements (e.g. buttons, slider) for controlling
+// the tree and animations.
+function Controller(Tree, title, commands) {
+    /* Initialize the DOM elements */
     this.runButton = createElement('button', {'innerHTML':'run >>'});
     this.nextButton = createElement('button', {'innerHTML':'next >'});
     this.prevButton = createElement('button', {'innerHTML':'prev &lt'});
@@ -91,6 +100,7 @@ function Controller(Tree, title, commands) {
     this.running = false;
     this.inputFlag = false;
 
+    // If initial commands have been provided, play the commands.
     if (this.animQueue.length > 0) {
         this.animQueue[0].showFirstFrame();
         this.playQueue(0);
@@ -121,6 +131,9 @@ function Controller(Tree, title, commands) {
 function randInt(min, max) {
     return Math.floor(Math.random() * (Number(max) - Number(min) + 1)) + Number(min);
 }
+
+// Execute the specified tree operation (insert, delete, find, extractMin)
+// with the specified operand
 Controller.prototype.execute = function (operation, operand) {
     let num;
     if (operand == '*') 
@@ -130,6 +143,8 @@ Controller.prototype.execute = function (operation, operand) {
 
     if (num === NaN) return;
 
+    // pause the currently running animation and
+    // move the playback slider to the end
     if (this.running) this.toggleRun();
     let i = this.playback.value = this.animQueue.length;
 
@@ -149,8 +164,10 @@ Controller.prototype.execute = function (operation, operand) {
         break;
     }
 
+    // Update the length of the playback slider
     this.playback.max = this.animQueue.length;
 
+    // Cancel the current animation and start playing the new animation
     this.curAnim?.abort();
     if (this.queueFinish) {
         this.queueFinish.then(() => {
@@ -163,6 +180,7 @@ Controller.prototype.execute = function (operation, operand) {
     if (!this.running) this.toggleRun();
 }
 
+// Go back to the previous animation
 Controller.prototype.stepBack = function () {
     let i = this.playback.value;
 
@@ -176,6 +194,7 @@ Controller.prototype.stepBack = function () {
     });
 }
 
+// Go to the next animation
 Controller.prototype.stepForward = function () {
     let i = this.playback?.value;
 
@@ -189,6 +208,7 @@ Controller.prototype.stepForward = function () {
     });
 }
 
+// Play/pause the current animation
 Controller.prototype.toggleRun = function () {
     this.running = !(this.running);
         
@@ -205,6 +225,8 @@ Controller.prototype.toggleRun = function () {
     }
 }
 
+// While the input slider is being moved, stop playing
+// animations and just show a single frame
 Controller.prototype.inputSlider = function () {
     let i = this.playback?.value;
 
@@ -219,6 +241,7 @@ Controller.prototype.inputSlider = function () {
             this.animQueue[i-1].showLastFrame();
 }
 
+// Resume playing once the user has finished moving the slider
 Controller.prototype.setSlider = function () {
     let i = this.playback?.value;
 

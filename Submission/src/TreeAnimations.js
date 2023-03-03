@@ -2,6 +2,7 @@ var TreeAnims = function (canvas) {
 
 return {
 
+    // Return an animation showing a cursor selecting each node
     select: function (tree, nodeSize, color, ...nodes) {
         nodes = nodes.map(node => cloneNode(node));
         let _select = select(canvas.layer1, nodeSize, color, ...nodes);
@@ -21,6 +22,7 @@ return {
             });
     },
 
+    // Return an animation showing the node falling from the tree
     dropNode: function (tree, node, nodeSize) {
         let root = cloneTree(tree);
         let _node = cloneNode(node);
@@ -53,6 +55,7 @@ return {
         return new CompositeAnimation(bounce, fall);
     },
     
+    // Move the cursor from node a to node b
     moveCursor: function (tree, nodeA, nodeB, nodeSize) {
         let root = cloneTree(tree);
     
@@ -76,6 +79,7 @@ return {
         return new CompositeAnimation(this.select(tree, nodeSize, 'cyan', a), move);
     },
     
+    // Return an animation showing the two nodes being swapped
     swap: function (tree, nodeA, nodeB, nodeSize) {
         let nodeList = flattenTree(tree);
         let i, j;

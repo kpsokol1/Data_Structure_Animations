@@ -1,3 +1,11 @@
+/**
+ * @author Sungmin Kim
+ */
+// Some common functions that I didn't know where else to put
+
+// This bascically assigns each object a unique id. Needed this in order
+// to track certain nodes for the animations.
+// source: https://stackoverflow.com/questions/1997661/unique-object-identifier-in-javascript
 (function() {
     if ( typeof Object.id != "undefined" ) return;
 
@@ -20,6 +28,9 @@
     };
 })();
 
+// helper function for creating DOM objects
+// (why the DOM API doesn't already include something like this alludes me)
+// source: https://stackoverflow.com/questions/3117756/javascript-create-element-and-set-attributes
 function createElement(ele, attrs) {
     //create the element with a specified string:
     let element = document.createElement(ele);
@@ -41,10 +52,12 @@ function createElement(ele, attrs) {
     return element;
 }
 
+// make the canvas blank
 function clearCanvas (ctx) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
+// draw the circle that appears around the nodes when we select them
 function drawCursor (x, y, weight, radius, ctx, color='cyan') {
     ctx.beginPath();
     ctx.strokeStyle = color;
@@ -53,6 +66,7 @@ function drawCursor (x, y, weight, radius, ctx, color='cyan') {
     ctx.stroke();
 }
 
+// draw the full tree
 function drawTree (node, size, ctx) 
 {
     if (!node) return;
@@ -106,6 +120,10 @@ function drawTree (node, size, ctx)
     }
 }
 
+// Return a copy of the node. (does not copy parent or children)
+// Each animation function need to create and hold onto
+// copies of trees and nodes so we can create and play animations
+// declaratively without side effects (for the most part).
 function cloneNode (node) {
     if (!node) return null;
 
@@ -134,6 +152,7 @@ function cloneNode (node) {
     }
 }
 
+// Return a copy of the entire tree.
 function cloneTree (node) {
     if (!node) return null;
 
@@ -169,6 +188,7 @@ function cloneTree (node) {
     }
 }
 
+// flatten the tree into an array of nodes
 function flattenTree (tree) {
     if (!tree) return [];
     if (tree.isLeaf) return [];
@@ -191,6 +211,7 @@ function flattenTree (tree) {
     }
 }
 
+// draw the individual node
 function drawNode (node, size, ctx) {
     if (!node) return;
 
@@ -219,10 +240,12 @@ function drawNode (node, size, ctx) {
     ctx.fillText(text, x, y, size * 0.8);
 }
 
+// get the distance between two points
 function distance (x0, y0, x1, y1) {
     return Math.sqrt((x1 - x0)**2 + (y1 - y0)**2);
 }
 
+// returns an animation of the cursor selecting the nodes
 function select (ctx, cursorSize, color='cyan', ...targets) {
     targets = targets.map(target => {return target ? {x: target.x, y: target.y} : null});
     
@@ -236,6 +259,7 @@ function select (ctx, cursorSize, color='cyan', ...targets) {
     }
 }
 
+// returns an animation of the cursor moving from point a to b
 function moveCursor (x0, y0, x1, y1, cursorSize, ctx) {
     return (progress) => {
         let x = x0 + (x1 - x0) * progress;
@@ -244,6 +268,7 @@ function moveCursor (x0, y0, x1, y1, cursorSize, ctx) {
     }
 }
 
+// returns an animation of the whole tree being translated
 function moveTree (root, x, y, nodeSize, ctx) {
     let _root = cloneTree(root);
 
@@ -258,6 +283,8 @@ function moveTree (root, x, y, nodeSize, ctx) {
     }
 }
 
+// Take the a tree from two points in time and return
+// an animation that shows an interpolation between the two states
 function interpolateTrees (init, dest, nodeSize, ctx) {
     let nodes = [];
 
@@ -294,6 +321,7 @@ function interpolateTrees (init, dest, nodeSize, ctx) {
     }
 }
 
+// move the node from point a to b
 function moveNode(node, nodeSize, x, y, ctx) {
     let _node = cloneNode(node);
 
@@ -308,6 +336,7 @@ function moveNode(node, nodeSize, x, y, ctx) {
     }
 }
 
+// swap two nodes
 function swapNodes (nodeA, nodeB, nodeSize, ctx) {
     let a = cloneNode(nodeA);
     let b = cloneNode(nodeB);
