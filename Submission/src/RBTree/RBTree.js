@@ -8,228 +8,229 @@ This file implements the functionality of the red black tree, while the BinaryTr
 class RBTNode {
     // Constructor for the node
     constructor(key, value) {
-        this.key = key; // key of the node
-        this.value = value; // value of the node
-        this.left = null; // left child of the node
-        this.right = null; // right child of the node
-        this.color = 'red'; // color of the node
-        this.parent = null; // parent of the node
-        this.isLeaf = (key==null && value==null); // boolean to check if the node is a leaf
+        //seting characteristics of the node
+        this.key = key;
+        this.value = value;
+        this.left = null;
+        this.right = null;
+        this.color = 'red';
+        this.parent = null;
+        this.isLeaf = (key == null && value == null); // boolean to check if the node is a leaf
         if (this.isLeaf) this.color = 'black'; // if the node is a leaf, it is black
 
         this.type = 'Binary'; // type of tree
     }
     // Function to link a node to the left of the current node
     linkLeft(node) {
-        this.left = node; // set the left child of the current node to the node passed in
-        node.parent = this; // set the parent of the node passed in to the current node
+        this.left = node;
+        node.parent = this;
     }
     // Function to link a node to the right of the current node
     linkRight(node) {
-        this.right = node; // set the right child of the current node to the node passed in
-        node.parent = this; // set the parent of the node passed in to the current node
+        this.right = node;
+        node.parent = this;
     }
     // Function to check if the node is red
     isRed() {
-        return this.color == 'red'; // return true if the node is red, false otherwise
+        return this.color == 'red';
     }
     // Function to check if the node is black
     isBlack() {
-        return this.color == 'black'; // return true if the node is black, false otherwise
+        return this.color == 'black';
     }
     // Function to set the color of the node to red
     setRed() {
-        this.color = 'red'; // set the color of the node to red
+        this.color = 'red';
     }
     // Function to set the color of the node to black
     setBlack() {
-        this.color = 'black'; // set the color of the node to black
+        this.color = 'black';
     }
-    // Function to get the depth of the node
+    // Function to get the depth of the node by traversing up the tree
     getDepth() {
-        let node = this; // set the node to the current node
-        let depth = 0; // set the depth to 0
-        while (node.parent != null) { // while the node has a parent
-            node = node.parent; // set the node to the parent of the node
-            depth++; // increment the depth
+        let node = this;
+        let depth = 0;
+        while (node.parent != null) {
+            node = node.parent;
+            depth++;
         }
-        return depth; // return the depth
+        return depth;
     }
-    // Function to get the level of the node
+    // Function to get the level of the node by adding 1 to the depth
     getLevel() {
-        return this.getDepth() + 1; // return the depth of the node plus 1
+        return this.getDepth() + 1;
     }
     // Function to get the size of the subtree rooted at the node
     getSize() {
-        let node = this; // set the node to the current node
-        let size = 1; // set the size to 1
+        let node = this;
+        let size = 1;
         if (node.left != null) size += node.left.getSize(); // if the node has a left child, add the size of the left subtree to the size
         if (node.right != null) size += node.right.getSize(); // if the node has a right child, add the size of the right subtree to the size
-        return size; // return the size
+        return size;
     }
     // Function to get the rank of the node
     getRank() {
-        let node = this; // set the node to the current node
-        let key = node.key; // set the key to the key of the node
-        let rank = 0; // set the rank to 0
-        while (node.parent != null) { // while the node has a parent
-            node = node.parent; // set the node to the parent of the node
+        let node = this;
+        let key = node.key;
+        let rank = 0;
+        while (node.parent != null) {
+            node = node.parent;
         }
-        let tree = node; // set the tree to the node
+        let tree = node;
         while (tree) { // while the tree is not null
-            if (key < tree.key){ // move to left subtree
-                tree = tree.left; // set the tree to the left child of the tree
+            if (key < tree.key) { // if the key is less than the key of the tree set the tree to the left child of the tree
+                tree = tree.left;
             }
-            else if (key > tree.key) { // move to right subtree
-                if (tree.left){ // if the tree has a left child
-                    rank += 1 + tree.left.getSize(); // add 1 to the rank and the size of the left subtree to the rank
-                    tree = tree.right; // set the tree to the right child of the tree
+            else if (key > tree.key) { // if the key is greater than the key of the tree 
+                if (tree.left) { // if the tree has a left child, add the size of the left subtree to the rank
+                    rank += 1 + tree.left.getSize();
+                    tree = tree.right;
                 }
-                else {
-                    rank += 1; // increment the rank
-                    tree = tree.right; // set the tree to the right child of the tree
+                else { // otherwise, add 1 to the rank
+                    rank += 1;
+                    tree = tree.right;
                 }
             }
-            else {
+            else { // if the key is equal to the key of the tree
                 if (tree.left) rank += tree.left.getSize(); // if the tree has a left child, add the size of the left subtree to the rank
-                return rank; // return the rank
+                return rank;
             }
         }
         return -1; // return -1 if the key is not in the tree
-        
+
     }
     // Function to get the grandparent of the node
     getGrandparent() {
-        if (this.parent == null) return null; // if the node has no parent, return null
-        return this.parent.parent; // return the parent of the parent of the node
+        if (this.parent == null) return null;
+        return this.parent.parent;
     }
-    // Function to get the uncle of the node
+    // Function to get the uncle of the node 
     getUncle() {
-        if (this.parent == null || this.parent.parent == null) return null; // if the node has no parent or grandparent, return null
-        if (this.parent == this.parent.parent.left) return this.parent.parent.right; // if the parent of the node is the left child of the grandparent, return the right child of the grandparent
-        else return this.parent.parent.left; // otherwise, return the left child of the grandparent
+        if (this.parent == null || this.parent.parent == null) return null;
+        if (this.parent == this.parent.parent.left) return this.parent.parent.right;
+        else return this.parent.parent.left;
     }
-    // Function to get the sibling of the node
+    // Function to get the sibling of the node by checking if the node is the left or right child of the parent and returning the other child
     getSibling() {
-        if (this.parent == null) return null; // if the node has no parent, return null
-        if (this == this.parent.left) return this.parent.right; // if the node is the left child of the parent, return the right child of the parent
-        else return this.parent.left; // otherwise, return the left child of the parent
+        if (this.parent == null) return null;
+        if (this == this.parent.left) return this.parent.right;
+        else return this.parent.left;
     }
     // Function to get the predecessor of the node
     getPredecessor() {
-        let node = this; // set the node to the current node
-        if (node.left != null) { // if the node has a left child
-            node = node.left; // set the node to the left child of the node
+        let node = this;
+        if (node.left != null) {
+            node = node.left;
             while (node.right != null) node = node.right; // while the node has a right child, set the node to the right child of the node
-            return node; // return the node
+            return node;
         }
         while (node.parent != null && node.parent.left == node) node = node.parent; // while the node has a parent and the node is the left child of the parent, set the node to the parent of the node
-        return node.parent; // return the parent of the node
+        return node.parent;
     }
     // Function to get the successor of the node
     getSuccessor() {
-        let node = this; // set the node to the current node
-        if (node.right != null) { // if the node has a right child
-            node = node.right; // set the node to the right child of the node
+        let node = this;
+        if (node.right != null) {
+            node = node.right;
             while (node.left != null) node = node.left; // while the node has a left child, set the node to the left child of the node
-            return node; // return the node
+            return node;
         }
         while (node.parent != null && node.parent.right == node) node = node.parent; // while the node has a parent and the node is the right child of the parent, set the node to the parent of the node
-        return node.parent; // return the parent of the node
+        return node.parent;
     }
-    // Function to get the minimum node in the subtree rooted at the node
+    // Function to get the minimum node in the subtree rooted at the node by traversing down the tree on the left side
     getMin() {
-        let node = this; // set the node to the current node
-        while (node.left != null) node = node.left; // while the node has a left child, set the node to the left child of the node
-        return node; // return the node
+        let node = this;
+        while (node.left != null) node = node.left;
+        return node;
     }
-    // Function to get the maximum node in the subtree rooted at the node
+    // Function to get the maximum node in the subtree rooted at the node by traversing down the tree on the right side
     getMax() {
-        let node = this; // set the node to the current node
-        while (node.right != null) node = node.right; // while the node has a right child, set the node to the right child of the node
-        return node; // return the node
+        let node = this;
+        while (node.right != null) node = node.right;
+        return node;
     }
 }
 // Class to store the tree and handle the node operations
 class RBTree {
-    // Constructor to initialize the tree
-    constructor(controller) {
-        this.root = null; // set the root of the tree to null
-        this.size = 0; // set the size of the tree to 0
-        this.leaf = new RBTNode(null, null); // set the leaf of the tree to a new node with a null key and value
 
-        this.canvas = controller.canvas; // set the canvas to the canvas of the controller
-        this.animQueue = []; // set the animation queue to an empty array
-        this.keys = []; // set the keys to an empty array
+    constructor(controller) {
+        this.root = null;
+        this.size = 0;
+        this.leaf = new RBTNode(null, null); // set the leaf to a new node with a null key and value
+
+        this.canvas = controller.canvas;
+        this.animQueue = [];
+        this.keys = [];
     }
     // Function to get a node with the given key
     find(key) {
-        let node = this.root; // set the node to the root of the tree
+        let node = this.root;
         while (node != null) { // while the node is not null
-            if (key < node.key) { // if the key is less than the key of the node
+            if (key < node.key) { // if the key is less than the key of the node set the node to the left child of the node
                 this.animQueue.push(
                     TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.left)); // add an animation to the animation queue to move the cursor to the left child of the node
-                node = node.left; // set the node to the left child of the node
+                node = node.left;
             }
-            else if (key > node.key) { // if the key is greater than the key of the node
+            else if (key > node.key) { // if the key is greater than the key of the node set the node to the right child of the node
                 this.animQueue.push(
-                    TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.right)); // add an animation to the animation queue to move the cursor to the right child of the node
-                node = node.right; // set the node to the right child of the node
-            } 
-            else {
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.right));
+                node = node.right;
+            }
+            else { //otherwise, the key is equal to the key of the node
                 this.animQueue.push(
                     TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node)); // add an animation to the animation queue to select the node
-                return node; // return the node
+                return node;
             }
         }
-        return null; // return null
+        return null;
     }
     // Function to insert a node with the given key and value
     insert(key, value) {
-        this.keys.push(key); // push the key to the keys array
-        this.keys.sort((a, b) => b - a); // sort the keys array in descending order
+        this.keys.push(key); // push the key to the keys array and sort the keys array in descending order
+        this.keys.sort((a, b) => b - a);
 
-        let node = new RBTNode(key, value); // create a new node with the given key and value
-        node.linkLeft(this.leaf); // link the left child of the node to the leaf
-        node.linkRight(this.leaf); // link the right child of the node to the leaf
-        this.insertNode(node); // insert the node into the tree
-        this.size++; // increment the size of the tree
-        return node; // return the node
+        let node = new RBTNode(key, value); // create a new node with the given key and value and link the children
+        node.linkLeft(this.leaf);
+        node.linkRight(this.leaf);
+        this.insertNode(node); // insert the node into the tree and increment the size of the tree
+        this.size++;
+        return node;
     }
     // Function to insert a node into the tree
     insertNode(node) {
-        if (this.root == null) { // if the root of the tree is null
-            this.root = node; // set the root of the tree to the node
+        if (this.root == null) { // if the root of the tree is null the node is the root of the tree
+            this.root = node;
             node.setBlack(); // set the color of the node to black
             this.animQueue.push(
-                TreeAnims.Binary(this.canvas).insert(this.root, node)); // add an animation to the animation queue to insert the node
-            return; // return
+                TreeAnims.Binary(this.canvas).insert(this.root, node));
+            return;
         }
-        let curr = this.root; // set the current node to the root of the tree
+        let curr = this.root;
         while (curr) { // while the current node is not null
             if (node.key < curr.key) { // if the key of the node is less than the key of the current node
-                if (curr.left == this.leaf) { // if the left child of the current node is the leaf
-                    node.parent = curr; // set the parent of the node to the current node
+                if (curr.left == this.leaf) { // if the left child of the current node is the leaf 
+                    node.parent = curr;
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).insert(this.root, node)); // add an animation to the animation queue to insert the node
+                        TreeAnims.Binary(this.canvas).insert(this.root, node));
                     curr.left = node; // set the left child of the current node to the node
-                    break; // break
-                } else {
+                    break;
+                } else { // otherwise, set the current node to the left child of the current node
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.left)); // add an animation to the animation queue to move the cursor to the left child of the current node
-                    curr = curr.left; // set the current node to the left child of the current node
+                        TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.left));
+                    curr = curr.left;
                 }
-            } else {
+            } else { // otherwise, the key of the node is greater than or equal to the key of the current node
                 if (curr.right == this.leaf) { // if the right child of the current node is the leaf
-                    node.parent = curr; // set the parent of the node to the current node
+                    node.parent = curr;
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).insert(this.root, node)); // add an animation to the animation queue to insert the node
-                    curr.right = node; // set the right child of the current node to the node
+                        TreeAnims.Binary(this.canvas).insert(this.root, node));
+                    curr.right = node;
                     break;
                 } else {
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.right)); // add an animation to the animation queue to move the cursor to the right child of the current node
-                    curr = curr.right; // set the current node to the right child of the current node
+                        TreeAnims.Binary(this.canvas).moveCursor(this.root, curr, curr.right));
+                    curr = curr.right;
                 }
             }
         }
@@ -237,71 +238,73 @@ class RBTree {
     }
     // Function to balance the tree after inserting a node
     balanceInsert(node) {
-        if (node.parent == null) { // if the parent of the node is null
-            node.setBlack(); // set the color of the node to black
+        if (node.parent == null) { // if there is no parent of the node
+            node.setBlack();
             this.animQueue.push(
-                TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node)); // add an animation to the animation queue to select the node
+                TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node));
         } else if (node.parent.isBlack()) { // if the parent of the node is black
-            return; // return
-        } else if (node.getUncle().isRed()) { // if the uncle of the node is red
-            node.parent.setBlack(); // set the color of the parent of the node to black
-            node.getUncle().setBlack(); // set the color of the uncle of the node to black
-            node.getGrandparent().setRed(); // set the color of the grandparent of the node to red
+            return;
+        } else if (node.getUncle().isRed()) { // if the uncle of the node is red 
+            node.parent.setBlack();
+            node.getUncle().setBlack();
+            node.getGrandparent().setRed();
 
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).
-                select(this.root, 'cyan', node.parent, node.getGrandparent(), node.getUncle())); // add an animation to the animation queue to select the parent, grandparent, and uncle of the node
+                    select(this.root, 'cyan', node.parent, node.getGrandparent(), node.getUncle()));
 
-            this.balanceInsert(node.getGrandparent()); // balance the tree
+            this.balanceInsert(node.getGrandparent());
         } else {
-            if (node == node.parent.right && node.parent == node.getGrandparent().left) { // if the node is the right child of the parent and the parent is the left child of the grandparent
-                this.rotateLeft(node.parent); // rotate the tree to the left
+            if (node == node.parent.right && node.parent == node.getGrandparent().left) { // if the node is the right child of the parent and the parent is the left child of the grandparent 
+                this.rotateLeft(node.parent);
                 node = node.left; // set the node to the left child of the node
             } else if (node == node.parent.left && node.parent == node.getGrandparent().right) { // if the node is the left child of the parent and the parent is the right child of the grandparent
-                this.rotateRight(node.parent); // rotate the tree to the right
-                node = node.right; // set the node to the right child of the node
+                this.rotateRight(node.parent);
+                node = node.right;
             }
-            node.parent.setBlack(); // set the color of the parent of the node to black
-            node.getGrandparent().setRed(); // set the color of the grandparent of the node to red
+            // set the color of the parent and grandparent of the node to black and red respectively
+            node.parent.setBlack();
+            node.getGrandparent().setRed();
 
             this.animQueue.push(
                 TreeAnims.Binary(this.canvas).
-                select(this.root, 'cyan', node.parent, node.getGrandparent())); // add an animation to the animation queue to select the parent and grandparent of the node
+                    select(this.root, 'cyan', node.parent, node.getGrandparent()));
 
-            if (node == node.parent.left) { // if the node is the left child of the parent
-                this.rotateRight(node.getGrandparent()); // rotate the tree to the right
-            } else {
-                this.rotateLeft(node.getGrandparent()); // rotate the tree to the left
+            if (node == node.parent.left) { // if the node is the left child of the parent rotate the tree to the right
+                this.rotateRight(node.getGrandparent());
+            } else { // otherwise, rotate the tree to the left
+                this.rotateLeft(node.getGrandparent());
             }
         }
     }
     // Function to replace a node with another node
     replaceNode(oldNode, newNode) {
-        if (oldNode.parent == null) { // if the parent of the old node is null
-            this.root = newNode; // set the root of the tree to the new node
+        if (oldNode.parent == null) { // if the parent of the old node is null set the root of the tree to the new node
+            this.root = newNode;
         } else { // if the parent of the old node is not null
-            if (oldNode == oldNode.parent.left) { // if the old node is the left child of the parent
-                oldNode.parent.left = newNode; // set the left child of the parent to the new node
-            } else { // if the old node is the right child of the parent
-                oldNode.parent.right = newNode; // set the right child of the parent to the new node
-            } // end if
-        } // end if
+            if (oldNode == oldNode.parent.left) { // if the old node is the left child of the parent set the left child of the parent to the new node
+                oldNode.parent.left = newNode;
+            } else { // if the old node is the right child of the parent set the right child of the parent to the new node
+                oldNode.parent.right = newNode;
+            }
+        }
         newNode.parent = oldNode.parent; // set the parent of the new node to the parent of the old node
     }
     // Function to rotate the tree to the left
     rotateLeft(node) {
         let _root = cloneTree(this.root); // clone the tree
         let initial = new _Animation(Timing.linear,
-            () => {}, 0,
+            () => { }, 0,
             () => {
                 this.canvas.clear();
                 drawTree(_root, TreeAnims.Binary.nodeSize, this.canvas.layer0);
             }); // create an animation to draw the tree
 
-        let right = node.right; // set the right node to the right child of the node
-        this.replaceNode(node, right); // replace the node with the right node
-        node.linkRight(right.left); // link the right child of the node to the left child of the right node
-        right.linkLeft(node); // link the left child of the right node to the node
+        let right = node.right; // set the right node to the right child of the node and replace the node with the right node
+        this.replaceNode(node, right);
+        //link the children of the node
+        node.linkRight(right.left);
+        right.linkLeft(node);
 
         let rotate = TreeAnims.Binary(this.canvas).updatePositions(this.root); // create an animation to update the positions of the nodes
         this.animQueue.push(new CompositeAnimation(initial, rotate)); // add the animation to the animation queue
@@ -310,206 +313,204 @@ class RBTree {
     rotateRight(node) {
         let _root = cloneTree(this.root); // clone the tree
         let initial = new _Animation(Timing.linear,
-            () => {}, 0,
+            () => { }, 0,
             () => {
                 this.canvas.clear();
                 drawTree(_root, TreeAnims.Binary.nodeSize, this.canvas.layer0);
             }); // create an animation to draw the tree
 
-        let left = node.left; // set the left node to the left child of the node
-        this.replaceNode(node, left); // replace the node with the left node
-        node.linkLeft(left.right); // link the left child of the node to the right child of the left node
-        left.linkRight(node); // link the right child of the left node to the node
+        let left = node.left; // set the left node to the left child of the node and replace the node with the left node
+        this.replaceNode(node, left);
+        // link the children of the node
+        node.linkLeft(left.right);
+        left.linkRight(node);
 
-        let rotate = TreeAnims.Binary(this.canvas).updatePositions(this.root); // create an animation to update the positions of the nodes
-        this.animQueue.push(new CompositeAnimation(initial, rotate)); // add the animation to the animation queue
+        let rotate = TreeAnims.Binary(this.canvas).updatePositions(this.root);
+        this.animQueue.push(new CompositeAnimation(initial, rotate));
     }
     // Function to get the minimum node in the tree
     getMin(node) {
-        while (node.left != this.leaf) { // while the left child of the node is not the leaf
+        while (node.left != this.leaf) { // while the left child of the node is not the leaf, set the node to the left child of the node
             this.animQueue.push(
-                TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.left)); // add an animation to the animation queue to move the cursor to the left child of the node
-            node = node.left; // set the node to the left child of the node
+                TreeAnims.Binary(this.canvas).moveCursor(this.root, node, node.left));
+            node = node.left;
         }
         this.animQueue.push(
-            TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node)); // add an animation to the animation queue to select the node
-        return node; // return the node
+            TreeAnims.Binary(this.canvas).select(this.root, 'yellow', node));
+        return node;
     }
     // Function to take the minimum node out of the tree
     extractMin() {
-        if (this.keys.length > 0) { // if the tree is not empty
-            this.delete(this.keys.pop()); // delete the minimum node from the tree
+        if (this.keys.length > 0) { // if the tree is not empty delete the minimum node
+            this.delete(this.keys.pop());
         }
     }
     // Function to delete a node from the tree
     delete(key) {
         let forRemove = this.leaf; // set the node to delete to the leaf
-        let tmp = this.root; // set the node to the root of the tree
+        let tmp = this.root;
 
-        while (tmp != this.leaf) { // while the node is not the leaf
-            if (tmp.key === key) { // if the key of the node is equal to the key to delete
-                forRemove = tmp; // set the node to delete to the node
+        //search for the node to delete
+        while (tmp != this.leaf) {
+            if (tmp.key === key) {
+                forRemove = tmp;
                 this.animQueue.push(
-                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove)); // add an animation to the animation queue to select the node
-                break; // break out of the loop
+                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove));
+                break;
             }
 
-            if (tmp.key > key) { // if the key of the node is greater than the key to delete
+            if (tmp.key > key) { // if the key of the node is greater than the key to delete set the node to the left child of the node
                 this.animQueue.push(
-                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.left)); // add an animation to the animation queue to move the cursor to the left child of the node
-                tmp = tmp.left; // set the node to the left child of the node
-            } else {
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.left));
+                tmp = tmp.left;
+            } else { // if the key of the node is less than the key to delete set the node to the right child of the node
                 this.animQueue.push(
-                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.right)); // add an animation to the animation queue to move the cursor to the right child of the node
-                tmp = tmp.right; // set the node to the right child of the node
+                    TreeAnims.Binary(this.canvas).moveCursor(this.root, tmp, tmp.right));
+                tmp = tmp.right;
             }
         }
 
-        if (forRemove == this.leaf) return;     // Avoid crashing when the key is not in the tree.
+        // if the node does not exist in the tree, return
+        if (forRemove == this.leaf) return;
 
-        let minRight = forRemove; // set the minimum node to the node to delete
-        let minRightColor = minRight.color; // set the color of the minimum node to the color of the node to delete
-        let newMinRight; // The new minimum node
+        let minRight = forRemove;
+        let minRightColor = minRight.color;
+        let newMinRight;
 
-        if (forRemove.left == this.leaf) { // if the left child of the node to delete is the leaf
-            newMinRight = forRemove.right; // set the new minimum node to the right child of the node to delete
-            if (!forRemove.right.isLeaf) { // if the right child of the node to delete is not the leaf
+        //if the node for removing has no left child we replace this by its right child
+        if (forRemove.left == this.leaf) {
+            newMinRight = forRemove.right;
+            if (!forRemove.right.isLeaf) {
                 this.animQueue.push(
-                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.right)); // add an animation to the animation queue to select the right child of the node to delete
+                    TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.right));
             }
-            this.replaceNode(forRemove, forRemove.right); // replace the node to delete with the right child of the node to delete
+            this.replaceNode(forRemove, forRemove.right);
         }
-        else if (forRemove.right == this.leaf) { // if the right child of the node to delete is the leaf
-            newMinRight = forRemove.left; // set the new minimum node to the left child of the node to delete
+        // if the node for removing has no right child, we replace this by its left child
+        else if (forRemove.right == this.leaf) {
+            newMinRight = forRemove.left;
             this.animQueue.push(
-                TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.left)); // add an animation to the animation queue to select the left child of the node to delete
-            this.replaceNode(forRemove, forRemove.left); // replace the node to delete with the left child of the node to delete
+                TreeAnims.Binary(this.canvas).select(this.root, 'yellow', forRemove.left));
+            this.replaceNode(forRemove, forRemove.left);
         }
         else {
-            minRight = this.getMin(forRemove.right); // set the minimum node to the minimum node in the right subtree of the node to delete
-            minRightColor = minRight.color; // set the color of the minimum node to the color of the minimum node
-            newMinRight = minRight.right; // set the new minimum node to the right child of the minimum node
+            // if the node to be remvoed has both children
+            minRight = this.getMin(forRemove.right);
+            minRightColor = minRight.color;
+            newMinRight = minRight.right;
 
-            if (minRight.parent === forRemove) { // if the parent of the minimum node is the node to delete
-                newMinRight.parent = minRight; // set the parent of the new minimum node to the minimum node
+            if (minRight.parent === forRemove) {
+                newMinRight.parent = minRight;
             }
-            else {
+            else { // if the parent of the minimum node is not the node to delete replace the minimum node with the right child of the minimum node
                 this.replaceNode(minRight, minRight.right); // replace the minimum node with the right child of the minimum node
-                minRight.right = forRemove.right; // set the right child of the minimum node to the right child of the node to delete
-                minRight.right.parent = minRight; // set the parent of the right child of the minimum node to the minimum node
+                minRight.right = forRemove.right;
+                minRight.right.parent = minRight;
             }
 
             this.replaceNode(forRemove, minRight); // replace the node to delete with the minimum node
-            minRight.left = forRemove.left; // set the left child of the minimum node to the left child of the node to delete
-            minRight.left.parent = minRight; // set the parent of the left child of the minimum node to the minimum node
-            minRight.color = forRemove.color; // set the color of the minimum node to the color of the node to delete
+            minRight.left = forRemove.left;
+            minRight.left.parent = minRight;
+            minRight.color = forRemove.color;
         }
 
         this.animQueue.push(
-            TreeAnims.Binary(this.canvas).dropNode(this.root, forRemove)); // add an animation to the animation queue to drop the node to delete
+            TreeAnims.Binary(this.canvas).dropNode(this.root, forRemove));
 
         this.animQueue.push(
-            TreeAnims.Binary(this.canvas).updatePositions(this.root)); // add an animation to the animation queue to update the positions of the nodes
-
-        if (minRightColor == 'black') { // if the color of the minimum node is black
-            this.balanceDelete(newMinRight); // balance the tree
+            TreeAnims.Binary(this.canvas).updatePositions(this.root));
+        if (minRightColor == 'black') { // if the color of the minimum node is black balance the tree
+            this.balanceDelete(newMinRight);
         }
     }
     // Function to balance the tree after a node is deleted
     balanceDelete(node) {
         while (node != this.root && node.color == 'black') { // while the node is not the root and the color of the node is black
-            console.log(node); // log the node
+            console.log(node);
 
-            if (node == node.parent.left) { // if the node is the left child of its parent
-                let brother = node.parent.right; // set the brother of the node to the right child of its parent
+            if (node == node.parent.left) { // if the node is the left child of its parent set the brother of the node to the right child of its parent
+                let brother = node.parent.right;
 
-                if (brother.color == 'red') { // if the color of the brother is red
-                    brother.color = 'black'; // set the color of the brother to black
-                    node.parent.color = 'red'; // set the color of the parent of the node to red
+                if (brother.color == 'red') { // if the color of the brother is red 
+                    brother.color = 'black';
+                    node.parent.color = 'red';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent)); // add an animation to the animation queue to select the brother and the parent of the node
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent));
                     this.rotateLeft(node.parent); // rotate the parent of the node to the left
-                    brother = node.parent.right; // set the brother of the node to the right child of its parent
+                    brother = node.parent.right;
                 }
 
-                if (
-                    brother.left.color == 'black' && // if the color of the left child of the brother is black
-                    brother.right.color == 'black' // and the color of the right child of the brother is black
-                ) {
-                    brother.color = 'red'; // set the color of the brother to red
+                if (brother.left.color == 'black' && brother.right.color == 'black') { //if both the left child or the right child of the brother is black
+                    brother.color = 'red';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother)); // add an animation to the animation queue to select the brother
-                    node = node.parent; // set the node to its parent
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
+                    node = node.parent;
                 } else {
                     if (brother.right.color == 'black') { // if the color of the right child of the brother is black
-                        brother.left.color = 'black'; // set the color of the left child of the brother to black
-                        brother.color = 'red'; // set the color of the brother to red
+                        brother.left.color = 'black';
+                        brother.color = 'red';
                         this.animQueue.push(
-                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.left)); // add an animation to the animation queue to select the brother and the left child of the brother
+                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.left));
                         this.rotateRight(brother); // rotate the brother to the right
 
                         // For some reason, brother becomes node's parent after the rotation,
                         // so I had to manually reset node's parent.
-                        node.parent = brother.parent.parent; // set the parent of the node to the parent of the parent of the brother
+                        node.parent = brother.parent.parent;
 
-                        brother = node.parent.right; // set the brother of the node to the right child of its parent
+                        brother = node.parent.right;
                     }
 
-                    brother.color = node.parent.color; // set the color of the brother to the color of the parent of the node
-                    node.parent.color = 'black'; // set the color of the parent of the node to black
-                    brother.right.color = 'black'; // set the color of the right child of the brother to black
+                    brother.color = node.parent.color;
+                    node.parent.color = 'black';
+                    brother.right.color = 'black';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.right, node.parent)); // add an animation to the animation queue to select the brother, the right child of the brother, and the parent of the node
-                    this.rotateLeft(node.parent); // rotate the parent of the node to the left
-                    node = this.root; // set the node to the root
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, brother.right, node.parent));
+                    this.rotateLeft(node.parent);
+                    node = this.root;
                 }
-            } else {
-                let brother = node.parent.left // set the brother of the node to the left child of its parent
-                if (brother.color == 'red') { // if the color of the brother is red
-                    brother.color = 'black'; // set the color of the brother to black
-                    node.parent.color = 'red'; // set the color of the parent of the node to red
+            } else { // if the node is the right child of its parent
+                let brother = node.parent.left
+                if (brother.color == 'red') {
+                    brother.color = 'black';
+                    node.parent.color = 'red';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent)); // add an animation to the animation queue to select the brother and the parent of the node
-                    this.rotateRight(node.parent); // rotate the parent of the node to the right
-                    brother = node.parent.left; // set the brother of the node to the left child of its parent
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother, node.parent));
+                    this.rotateRight(node.parent);
+                    brother = node.parent.left;
                 }
 
-                if (
-                    brother.left.color == 'black' && // if the color of the left child of the brother is black
-                    brother.right.color == 'black' // and the color of the right child of the brother is black
-                ) {
-                    brother.color = 'red'; // set the color of the brother to red
+                if (brother.left.color == 'black' && brother.right.color == 'black') { //if both the left child or the right child of the brother is black
+                    brother.color = 'red';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother)); // add an animation to the animation queue to select the brother
-                    node = node.parent; // set the node to its parent
+                        TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
+                    node = node.parent;
                 } else {
-                    if (brother.left.color == 'black') { // if the color of the left child of the brother is black
-                        brother.right.color = 'black'; // set the color of the right child of the brother to black
-                        brother.color = 'red'; // set the color of the brother to red
-                        this.animQueue.push( 
-                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother)); // add an animation to the animation queue to select the brother
-                        this.rotateLeft(brother); // rotate the brother to the left
+                    if (brother.left.color == 'black') {
+                        brother.right.color = 'black';
+                        brother.color = 'red';
+                        this.animQueue.push(
+                            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', brother));
+                        this.rotateLeft(brother);
 
-                        // For some reason, brother becomes node's parent after the rotation,
-                        // so I had to manually reset node's parent.
-                        node.parent = brother.parent.parent; // set the parent of the node to the parent of the parent of the brother
-                    
-                        brother = node.parent.left; // set the brother of the node to the left child of its parent
+
+                        node.parent = brother.parent.parent;
+
+                        brother = node.parent.left;
                     }
 
-                    brother.color = node.parent.color; // set the color of the brother to the color of the parent of the node
-                    node.parent.color = 'black'; // set the color of the parent of the node to black
-                    brother.left.color = 'black'; // set the color of the left child of the brother to black
+                    brother.color = node.parent.color;
+                    node.parent.color = 'black';
+                    brother.left.color = 'black';
                     this.animQueue.push(
-                        TreeAnims.Binary(this.canvas).select(this.root, brother, 'cyan', node.parent, brother.left)); // add an animation to the animation queue to select the brother, the left child of the brother, and the parent of the node
-                    this.rotateRight(node.parent); // rotate the parent of the node to the right
-                    node = this.root; // set the node to the root
+                        TreeAnims.Binary(this.canvas).select(this.root, brother, 'cyan', node.parent, brother.left));
+                    this.rotateRight(node.parent);
+                    node = this.root;
                 }
             }
         }
 
-        node.color = 'black'; // set the color of the node to black
+        node.color = 'black';
         this.animQueue.push(
-            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node)); // add an animation to the animation queue to select the node
+            TreeAnims.Binary(this.canvas).select(this.root, 'cyan', node));
     }
 }
