@@ -1,6 +1,5 @@
 **Billiard Trees**
 
-**Link to GitHub repository:** [https://github.com/kpsokol1/Team_4_Project_2](https://github.com/kpsokol1/Team_4_Project_2)
 
 **Contributors:** Kyle Sokol, Sungmin Kim, Chad Perry, Dixitha Korvi, Ben Fioresi, Tyler McWilliams, and Mark Chapman
 
